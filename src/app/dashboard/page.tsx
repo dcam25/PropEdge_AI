@@ -7,6 +7,7 @@ import type { Prop, SportId } from "@/types";
 import { PropTable } from "@/components/prop-table";
 import { PropDetailModal } from "@/components/prop-detail-modal";
 import { PickBuilder } from "@/components/pick-builder";
+import { DashboardChart } from "@/components/dashboard-chart";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/context/auth-context";
@@ -95,7 +96,7 @@ export default function DashboardPage() {
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold text-zinc-100">Props Dashboard</h1>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               type="number"
               placeholder="Min hit rate %"
@@ -111,6 +112,10 @@ export default function DashboardPage() {
               onChange={(e) => setMinEdge(e.target.value)}
             />
           </div>
+        </div>
+
+        <div className="mb-6">
+          <DashboardChart props={filteredProps} />
         </div>
 
         <div className="flex flex-col gap-6 lg:flex-row">

@@ -35,6 +35,7 @@ src/
 ### `profiles`
 - `id` (UUID, FK → auth.users)
 - `email`
+- `first_name`, `last_name`, `birthday` (optional)
 - `is_premium` (boolean)
 - `ai_insights_used_today`, `ai_insights_date` (for free tier limit)
 - `created_at`, `updated_at`
@@ -48,7 +49,7 @@ src/
 ### `stripe_customers`
 - `user_id`, `stripe_customer_id`
 
-Run `supabase/migrations/001_initial_schema.sql` in Supabase SQL Editor.
+Run migrations in order: `001_initial_schema.sql`, then `002_profiles_name_birthday.sql` (adds first_name, last_name, birthday to profiles).
 
 ## Model Scoring
 
@@ -91,6 +92,28 @@ Copy `.env.example` to `.env.local` and fill in:
 3. Add webhook endpoint: `https://your-domain.com/api/stripe/webhook`
 4. Events: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
 5. Copy webhook signing secret to `STRIPE_WEBHOOK_SECRET`.
+
+## Email Confirmation & OTP
+
+When Supabase has **Confirm email** enabled (Auth → Providers → Email):
+
+**Magic Link (default):** User gets a link, clicks it, redirects to `/auth/callback`.
+
+**Email OTP (6-digit code):** To enable, edit the Magic Link email template in Supabase Dashboard → Auth → Email Templates. Replace the template body to include `{{ .Token }}`:
+```
+<h2>One time login code</h2>
+<p>Please enter this code: {{ .Token }}</p>
+```
+Then both signup and login can use the 6-digit code flow.
+
+**Signup flow:** Email → OTP verify → Set password. Optional: skip OTP and use magic link. Profile fields (first name, last name, birthday) are collected at signup and stored in `profiles`.
+
+**Login flow:** Users can sign in with password or choose "Sign in with email code instead" to receive a 6-digit OTP.
+
+1. User receives email with code or link.
+2. User enters code or clicks link → Supabase redirects to `/auth/callback?code=...`
+3. The callback route exchanges the code for a session and redirects to `/dashboard`.
+4. Add `http://localhost:3000/auth/callback` and `https://your-domain.com/auth/callback` to Supabase **Authentication → URL Configuration → Redirect URLs**.
 
 ## Deployment
 

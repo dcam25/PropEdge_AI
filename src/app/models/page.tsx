@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,9 @@ const DEFAULT_FACTORS: ModelFactor[] = [
 
 export default function ModelsPage() {
   const [models, setModels] = useState<UserModel[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [buildModelLoading, setBuildModelLoading] = useState(false);
+  const [activeModelId, setActiveModelId] = useState<string | null>(null);
   const [showCreator, setShowCreator] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -34,15 +38,29 @@ export default function ModelsPage() {
     : models.length < 1;
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setModelsLoading(false);
+      return;
+    }
+    setModelsLoading(true);
     supabase
       .from("user_models")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        setModels((data ?? []) as UserModel[]);
-      });
+        setModels((data ?? []).map((r: Record<string, unknown>) => ({
+          id: r.id,
+          userId: r.user_id,
+          name: r.name,
+          description: r.description,
+          factors: r.factors as ModelFactor[],
+          performanceScore: r.performance_score,
+          isActive: r.is_active,
+          createdAt: r.created_at,
+        })));
+      })
+      .finally(() => setModelsLoading(false));
   }, [user]);
 
   const handleBuildModel = async () => {
@@ -51,7 +69,9 @@ export default function ModelsPage() {
       alert("Model limit reached. Upgrade to Premium for up to 10 models.");
       return;
     }
+    setBuildModelLoading(true);
 
+    try {
     const { data: existing } = await supabase
       .from("user_models")
       .select("is_active")
@@ -95,30 +115,41 @@ export default function ModelsPage() {
       setNewDesc("");
       setFactors(DEFAULT_FACTORS);
     }
+    } finally {
+      setBuildModelLoading(false);
+    }
   };
 
   const handleSetActive = async (model: UserModel) => {
     if (!user) return;
-    await supabase
-      .from("user_models")
-      .update({ is_active: false })
-      .eq("user_id", user.id);
-    await supabase
-      .from("user_models")
-      .update({ is_active: true })
-      .eq("id", model.id);
-    setModels((prev) =>
-      prev.map((m) => ({
-        ...m,
-        isActive: m.id === model.id,
-      }))
-    );
+    setActiveModelId(model.id);
+    try {
+      await supabase
+        .from("user_models")
+        .update({ is_active: false })
+        .eq("user_id", user.id);
+      await supabase
+        .from("user_models")
+        .update({ is_active: true })
+        .eq("id", model.id);
+      setModels((prev) =>
+        prev.map((m) => ({
+          ...m,
+          isActive: m.id === model.id,
+        }))
+      );
+    } finally {
+      setActiveModelId(null);
+    }
   };
 
-  if (loading) {
+  if (loading || modelsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <p className="text-zinc-500">Loading...</p>
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-600 border-t-emerald-500" />
+          <p className="text-zinc-500">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -163,8 +194,16 @@ export default function ModelsPage() {
           </Button>
         </div>
 
+        <AnimatePresence>
         {showCreator && (
-          <Card className="mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25 }}
+            className="mb-8"
+          >
+          <Card>
             <CardHeader>
               <CardTitle>Build Model</CardTitle>
             </CardHeader>
@@ -212,16 +251,38 @@ export default function ModelsPage() {
                   ))}
                 </div>
               </div>
-              <Button onClick={handleBuildModel}>Build Model</Button>
+              <Button onClick={handleBuildModel} disabled={buildModelLoading}>
+                {buildModelLoading ? "Building..." : "Build Model"}
+              </Button>
             </CardContent>
           </Card>
+          </motion.div>
         )}
+        </AnimatePresence>
 
-        <div className="space-y-4">
+        <motion.div
+          className="space-y-4"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.06 },
+            },
+          }}
+        >
           {models.map((model) => {
             const bt = runBacktest(MOCK_PROPS, model);
             return (
-              <Card key={model.id}>
+              <motion.div
+                key={model.id}
+                variants={{
+                  hidden: { opacity: 0, y: 12 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+              >
+              <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2">
@@ -237,8 +298,13 @@ export default function ModelsPage() {
                     )}
                   </div>
                   {!model.isActive && (
-                    <Button size="sm" variant="outline" onClick={() => handleSetActive(model)}>
-                      Set Active
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSetActive(model)}
+                      disabled={activeModelId === model.id}
+                    >
+                      {activeModelId === model.id ? "Setting..." : "Set Active"}
                     </Button>
                   )}
                 </CardHeader>
@@ -269,9 +335,10 @@ export default function ModelsPage() {
                   )}
                 </CardContent>
               </Card>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </main>
     </div>
   );

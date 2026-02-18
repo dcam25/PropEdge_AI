@@ -1,108 +1,21 @@
 import type { Prop } from "@/types";
 
-const SPORTS: Array<{ id: Prop["sport"]; teams: string[] }> = [
-  { id: "nba", teams: ["LAL", "BOS", "GSW", "MIA", "DEN", "PHX", "MIL", "DAL"] },
-  { id: "nfl", teams: ["KC", "BUF", "SF", "PHI", "DAL", "MIA", "BAL", "DET"] },
-  { id: "mlb", teams: ["NYY", "LAD", "ATL", "HOU", "PHI", "SD", "TB", "TOR"] },
-  { id: "nhl", teams: ["VGK", "BOS", "TOR", "EDM", "COL", "CAR", "DAL", "FLA"] },
-  { id: "wnba", teams: ["LV", "NY", "CON", "PHX", "SEA", "CHI", "MIN", "ATL"] },
-  { id: "lol", teams: ["T1", "Gen.G", "JDG", "BLG", "G2", "C9", "TL", "DK"] },
-  { id: "cs2", teams: ["FaZe", "Vitality", "G2", "NAVI", "Spirit", "MOUZ", "Liquid", "Complexity"] },
-  { id: "valorant", teams: ["Sentinels", "LOUD", "DRX", "Paper Rex", "Fnatic", "100T", "NRG", "Leviatan"] },
-];
-
-const NBA_PLAYERS = ["LeBron James", "Stephen Curry", "Kevin Durant", "Giannis Antetokounmpo", "Luka Doncic", "Jayson Tatum", "Anthony Edwards", "Shai Gilgeous-Alexander"];
-const NFL_PLAYERS = ["Patrick Mahomes", "Josh Allen", "Tyreek Hill", "Travis Kelce", "Christian McCaffrey", "CeeDee Lamb", "Justin Jefferson", "Ja'Marr Chase"];
-const MLB_PLAYERS = ["Shohei Ohtani", "Aaron Judge", "Mookie Betts", "Ronald Acuña Jr", "Juan Soto", "Bryce Harper", "Corey Seager", "Yordan Alvarez"];
-const NHL_PLAYERS = ["Connor McDavid", "Auston Matthews", "Nathan MacKinnon", "David Pastrnak", "Nikita Kucherov", "Leon Draisaitl", "Artemi Panarin", "Jack Hughes"];
-const WNBA_PLAYERS = ["A'ja Wilson", "Breanna Stewart", "Caitlin Clark", "Alyssa Thomas", "Jewell Loyd", "Sabrina Ionescu", "Kelsey Plum", "Chelsea Gray"];
-const LOL_PLAYERS = ["Faker", "Chovy", "Knight", "Ruler", "Caps", "Blaber", "CoreJJ", "ShowMaker"];
-const CS2_PLAYERS = ["s1mple", "ZywOo", "m0NESY", "NiKo", "donk", "ropz", "EliGE", "Twistzz"];
-const VALORANT_PLAYERS = ["TenZ", "aspas", "Zombs", "yay", "Sacy", "cNed", "Scream", "Chronicle"];
-
-const PLAYER_MAP: Record<string, string[]> = {
-  nba: NBA_PLAYERS,
-  nfl: NFL_PLAYERS,
-  mlb: MLB_PLAYERS,
-  nhl: NHL_PLAYERS,
-  wnba: WNBA_PLAYERS,
-  lol: LOL_PLAYERS,
-  cs2: CS2_PLAYERS,
-  valorant: VALORANT_PLAYERS,
-};
-
-const PROP_TYPES: Record<string, string[]> = {
-  nba: ["Points", "Rebounds", "Assists", "3-Pointers", "Steals", "Blocks"],
-  nfl: ["Passing Yards", "Rushing Yards", "Receptions", "Receiving Yards", "Touchdowns"],
-  mlb: ["Hits", "Total Bases", "Strikeouts", "RBIs", "Runs"],
-  nhl: ["Points", "Goals", "Assists", "Shots", "Saves"],
-  wnba: ["Points", "Rebounds", "Assists", "Steals", "Blocks"],
-  lol: ["Kills", "Assists", "Deaths", "CS", "Vision Score"],
-  cs2: ["Kills", "Assists", "Deaths", "Headshots", "ADR"],
-  valorant: ["Kills", "Assists", "Deaths", "First Bloods", "ACS"],
-};
-
-function randomBetween(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function generatePropsForSport(sport: Prop["sport"], count: number): Prop[] {
-  const teams = SPORTS.find((s) => s.id === sport)?.teams ?? [];
-  const players = PLAYER_MAP[sport] ?? [];
-  const propTypes = PROP_TYPES[sport] ?? ["Points"];
-
-  const props: Prop[] = [];
-  const usedIds = new Set<string>();
-
-  for (let i = 0; i < count; i++) {
-    const player = players[randomBetween(0, players.length - 1)];
-    const team = teams[randomBetween(0, teams.length - 1)];
-    let opponent = teams[randomBetween(0, teams.length - 1)];
-    while (opponent === team) opponent = teams[randomBetween(0, teams.length - 1)];
-
-    const propType = propTypes[randomBetween(0, propTypes.length - 1)];
-    const line = sport === "lol" || sport === "cs2" || sport === "valorant"
-      ? randomBetween(5, 25)
-      : randomBetween(10, 35);
-    const hitRate = Math.round((Math.random() * 0.6 + 0.2) * 100) / 100;
-    const streak = randomBetween(0, 5);
-    const modelEdge = Math.round((Math.random() * 40 + 50) * 10) / 10;
-
-    const lastGames = Array.from({ length: 10 }, () => randomBetween(5, 30));
-    const id = `${sport}-${player.replace(/\s/g, "-")}-${propType}-${i}-${Date.now()}`;
-
-    if (!usedIds.has(id)) {
-      usedIds.add(id);
-      props.push({
-        id,
-        sport,
-        player,
-        team,
-        opponent,
-        propType,
-        line,
-        hitRate,
-        streak,
-        modelEdge,
-        lastGames,
-        supportingStats: { avg: randomBetween(15, 28), trend: randomBetween(-2, 2) },
-        date: new Date().toISOString().split("T")[0],
-      });
-    }
-  }
-
-  return props;
-}
-
+// Deterministic static data to avoid hydration mismatch (no Math.random/Date.now)
 export const MOCK_PROPS: Prop[] = [
-  ...generatePropsForSport("nba", 12),
-  ...generatePropsForSport("nfl", 10),
-  ...generatePropsForSport("mlb", 8),
-  ...generatePropsForSport("nhl", 8),
-  ...generatePropsForSport("wnba", 6),
-  ...generatePropsForSport("lol", 8),
-  ...generatePropsForSport("cs2", 6),
-  ...generatePropsForSport("valorant", 6),
+  { id: "nba-1", sport: "nba", player: "LeBron James", team: "LAL", opponent: "BOS", propType: "Points", line: 25, hitRate: 0.7, streak: 3, modelEdge: 68.5, lastGames: [28, 22, 31, 19, 27, 24, 26, 23, 29, 21], supportingStats: { avg: 25, trend: 1 }, date: "2025-02-18" },
+  { id: "nba-2", sport: "nba", player: "Stephen Curry", team: "GSW", opponent: "MIA", propType: "3-Pointers", line: 4, hitRate: 0.6, streak: 2, modelEdge: 62.3, lastGames: [5, 3, 4, 6, 2, 4, 3, 5, 4, 3], supportingStats: { avg: 4, trend: 0 }, date: "2025-02-18" },
+  { id: "nba-3", sport: "nba", player: "Giannis Antetokounmpo", team: "MIL", opponent: "DEN", propType: "Rebounds", line: 12, hitRate: 0.8, streak: 4, modelEdge: 72.1, lastGames: [14, 11, 13, 15, 10, 12, 14, 11, 13, 12], supportingStats: { avg: 12, trend: 2 }, date: "2025-02-18" },
+  { id: "nba-4", sport: "nba", player: "Luka Doncic", team: "DAL", opponent: "PHX", propType: "Assists", line: 8, hitRate: 0.65, streak: 1, modelEdge: 58.9, lastGames: [9, 7, 8, 6, 10, 7, 8, 9, 6, 8], supportingStats: { avg: 8, trend: -1 }, date: "2025-02-18" },
+  { id: "nba-5", sport: "nba", player: "Kevin Durant", team: "PHX", opponent: "DAL", propType: "Points", line: 27, hitRate: 0.55, streak: 0, modelEdge: 55.2, lastGames: [30, 24, 28, 22, 26, 25, 29, 23, 27, 24], supportingStats: { avg: 26, trend: -1 }, date: "2025-02-18" },
+  { id: "nba-6", sport: "nba", player: "Jayson Tatum", team: "BOS", opponent: "LAL", propType: "Points", line: 26, hitRate: 0.75, streak: 5, modelEdge: 70.4, lastGames: [28, 24, 30, 22, 27, 25, 29, 26, 28, 24], supportingStats: { avg: 26, trend: 2 }, date: "2025-02-18" },
+  { id: "nfl-1", sport: "nfl", player: "Patrick Mahomes", team: "KC", opponent: "BUF", propType: "Passing Yards", line: 275, hitRate: 0.7, streak: 2, modelEdge: 65.8, lastGames: [290, 260, 310, 245, 280, 265, 295, 250, 285, 270], supportingStats: { avg: 275, trend: 1 }, date: "2025-02-18" },
+  { id: "nfl-2", sport: "nfl", player: "Josh Allen", team: "BUF", opponent: "KC", propType: "Rushing Yards", line: 45, hitRate: 0.6, streak: 1, modelEdge: 59.2, lastGames: [52, 38, 48, 42, 55, 35, 50, 40, 45, 48], supportingStats: { avg: 45, trend: 0 }, date: "2025-02-18" },
+  { id: "mlb-1", sport: "mlb", player: "Shohei Ohtani", team: "LAD", opponent: "NYY", propType: "Total Bases", line: 2, hitRate: 0.65, streak: 2, modelEdge: 63.5, lastGames: [3, 1, 2, 4, 2, 1, 3, 2, 2, 1], supportingStats: { avg: 2, trend: 1 }, date: "2025-02-18" },
+  { id: "nhl-1", sport: "nhl", player: "Connor McDavid", team: "EDM", opponent: "COL", propType: "Points", line: 1, hitRate: 0.8, streak: 4, modelEdge: 71.2, lastGames: [2, 1, 1, 2, 1, 1, 2, 1, 1, 2], supportingStats: { avg: 1, trend: 1 }, date: "2025-02-18" },
+  { id: "wnba-1", sport: "wnba", player: "A'ja Wilson", team: "LV", opponent: "NY", propType: "Points", line: 22, hitRate: 0.75, streak: 3, modelEdge: 69.8, lastGames: [24, 20, 23, 21, 25, 19, 22, 24, 20, 23], supportingStats: { avg: 22, trend: 2 }, date: "2025-02-18" },
+  { id: "lol-1", sport: "lol", player: "Faker", team: "T1", opponent: "Gen.G", propType: "Kills", line: 4, hitRate: 0.6, streak: 2, modelEdge: 61.4, lastGames: [5, 3, 4, 6, 2, 4, 3, 5, 4, 3], supportingStats: { avg: 4, trend: 0 }, date: "2025-02-18" },
+  { id: "cs2-1", sport: "cs2", player: "s1mple", team: "NAVI", opponent: "FaZe", propType: "Kills", line: 22, hitRate: 0.7, streak: 3, modelEdge: 67.3, lastGames: [24, 20, 23, 21, 25, 19, 22, 24, 20, 23], supportingStats: { avg: 22, trend: 1 }, date: "2025-02-18" },
+  { id: "valorant-1", sport: "valorant", player: "TenZ", team: "Sentinels", opponent: "LOUD", propType: "Kills", line: 18, hitRate: 0.65, streak: 2, modelEdge: 62.7, lastGames: [20, 16, 19, 17, 21, 15, 18, 20, 16, 19], supportingStats: { avg: 18, trend: 1 }, date: "2025-02-18" },
 ];
 
 export const SPORT_LABELS: Record<Prop["sport"], string> = {

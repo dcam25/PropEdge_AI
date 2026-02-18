@@ -1,8 +1,8 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Zap } from "lucide-react";
 import type { Prop } from "@/types";
-import { SPORT_LABELS } from "@/data/mock-props";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -38,9 +38,12 @@ export function PropTable({ props, onAddToSlip, onViewDetail }: PropTableProps) 
           </tr>
         </thead>
         <tbody>
-          {props.map((prop) => (
-            <tr
+          {props.map((prop, i) => (
+            <motion.tr
               key={prop.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2, delay: i * 0.02 }}
               className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30"
             >
               <td className="px-4 py-3 font-medium">{prop.player}</td>
@@ -76,7 +79,7 @@ export function PropTable({ props, onAddToSlip, onViewDetail }: PropTableProps) 
                   </Button>
                 </div>
               </td>
-            </tr>
+            </motion.tr>
           ))}
         </tbody>
       </table>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +28,7 @@ export function PropDetailModal({
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [askMore, setAskMore] = useState("");
-  const { canUseAIInsight, incrementAIInsight, user, profile } = useAuth();
+  const { canUseAIInsight, incrementAIInsight, user, profile, isUpdatingProfile } = useAuth();
 
   const handleGetInsight = async () => {
     if (!prop || !user) return;
@@ -97,14 +98,19 @@ export function PropDetailModal({
             {!aiInsight ? (
               <Button
                 onClick={handleGetInsight}
-                disabled={loading || !user}
+                disabled={loading || !user || isUpdatingProfile}
               >
-                {loading ? "Generating..." : user ? `Ask AI (${remaining})` : "Sign in to use AI"}
+                {loading ? "Generating..." : isUpdatingProfile ? "Saving..." : user ? `Ask AI (${remaining})` : "Sign in to use AI"}
               </Button>
             ) : (
-              <p className="rounded-lg bg-zinc-800/50 p-4 text-sm text-zinc-300">
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="rounded-lg bg-zinc-800/50 p-4 text-sm text-zinc-300"
+              >
                 {aiInsight}
-              </p>
+              </motion.p>
             )}
             {aiInsight && (
               <div className="mt-3 flex gap-2">

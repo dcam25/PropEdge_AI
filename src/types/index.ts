@@ -56,3 +56,12 @@ export interface BacktestResult {
   totalBets: number;
   byDate: { date: string; hit: boolean; count: number }[];
 }
+
+export interface UserProfile {
+  first_name?: string | null;
+  last_name?: string | null;
+  birthday?: string | null; // ISO date YYYY-MM-DD
+  is_premium: boolean;
+  ai_insights_used_today: number;
+  ai_insights_date: string | null;
+}

@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 interface Profile {
+  first_name?: string | null;
+  last_name?: string | null;
+  birthday?: string | null;
   is_premium: boolean;
   ai_insights_used_today: number;
   ai_insights_date: string | null;
@@ -14,6 +17,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  isUpdatingProfile: boolean;
   canUseAIInsight: () => boolean;
   incrementAIInsight: () => Promise<void>;
 }
@@ -28,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -55,10 +60,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data } = await supabase
         .from("profiles")
-        .select("is_premium, ai_insights_used_today, ai_insights_date")
+        .select("first_name, last_name, birthday, is_premium, ai_insights_used_today, ai_insights_date")
         .eq("id", userId)
         .maybeSingle();
       setProfile(data ?? null);
+
+      // Apply pending profile data from signup (magic link flow)
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem("propedge_pending_profile");
+        if (raw) {
+          try {
+            const pending = JSON.parse(raw) as { email: string; first_name?: string; last_name?: string; birthday?: string };
+            const { data: session } = await supabase.auth.getSession();
+            if (session.session?.user?.email === pending.email) {
+              const updates: Record<string, string> = {};
+              if (pending.first_name) updates.first_name = pending.first_name;
+              if (pending.last_name) updates.last_name = pending.last_name;
+              if (pending.birthday) updates.birthday = pending.birthday;
+              if (Object.keys(updates).length > 0) {
+                await supabase.from("profiles").update({ ...updates, updated_at: new Date().toISOString() }).eq("id", userId);
+                setProfile((p) => (p ? { ...p, ...updates } : p));
+              }
+              localStorage.removeItem("propedge_pending_profile");
+            }
+          } catch {
+            localStorage.removeItem("propedge_pending_profile");
+          }
+        }
+      }
     } catch {
       setProfile(null);
     } finally {
@@ -76,24 +105,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function incrementAIInsight() {
     if (!user) return;
-    const today = new Date().toISOString().split("T")[0];
-    const isNewDay = profile?.ai_insights_date !== today;
-    const newCount = isNewDay ? 1 : (profile?.ai_insights_used_today ?? 0) + 1;
+    setIsUpdatingProfile(true);
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const isNewDay = profile?.ai_insights_date !== today;
+      const newCount = isNewDay ? 1 : (profile?.ai_insights_used_today ?? 0) + 1;
 
-    await supabase
-      .from("profiles")
-      .update({
+      await supabase
+        .from("profiles")
+        .update({
+          ai_insights_used_today: newCount,
+          ai_insights_date: today,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+
+      setProfile((p) => ({
+        ...p!,
         ai_insights_used_today: newCount,
         ai_insights_date: today,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id);
-
-    setProfile((p) => ({
-      ...p!,
-      ai_insights_used_today: newCount,
-      ai_insights_date: today,
-    }));
+      }));
+    } finally {
+      setIsUpdatingProfile(false);
+    }
   }
 
   return (
@@ -102,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         profile,
         loading,
+        isUpdatingProfile,
         canUseAIInsight,
         incrementAIInsight,
       }}

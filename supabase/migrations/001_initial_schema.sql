@@ -5,6 +5,9 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT,
+  first_name TEXT,
+  last_name TEXT,
+  birthday DATE,
   is_premium BOOLEAN DEFAULT FALSE,
   ai_insights_used_today INT DEFAULT 0,
   ai_insights_date DATE,
@@ -60,6 +63,7 @@ RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.profiles (id, email)
   VALUES (NEW.id, NEW.email);
+  -- first_name, last_name, birthday are set by client after signup
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
