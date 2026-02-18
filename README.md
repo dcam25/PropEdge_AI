@@ -72,6 +72,18 @@ Sports props analytics web app: research player props, build custom models, and 
 
 ---
 
+## API Endpoints
+
+| Endpoint | Method | Purpose | Used in |
+|----------|--------|---------|---------|
+| `/api/ai-insight` | POST | Generate AI insight for a prop | Dashboard → Prop detail modal |
+| `/api/stripe/checkout` | POST | Create Stripe Checkout session | Pricing page → Subscribe button |
+| `/api/stripe/portal` | POST | Redirect to Stripe Customer Portal | Pricing page → Manage Subscription |
+| `/api/stripe/webhook` | POST | Receive Stripe subscription events | Stripe (external) |
+| `/auth/callback` | GET | Handle Supabase auth redirect (OTP, magic link) | Supabase redirect URL |
+
+---
+
 ## Project Structure
 
 ```
@@ -79,6 +91,7 @@ src/
 ├── app/
 │   ├── (auth)/login, signup     # Auth pages
 │   ├── api/                     # AI insight, Stripe checkout/webhook/portal
+│   ├── auth/callback/           # Supabase auth redirect handler
 │   ├── dashboard/               # Props table + pick builder
 │   ├── models/                  # Model builder
 │   └── pricing/                 # Subscription plans

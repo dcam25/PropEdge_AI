@@ -9,6 +9,7 @@ import { PropDetailModal } from "@/components/prop-detail-modal";
 import { PickBuilder } from "@/components/pick-builder";
 import { DashboardChart } from "@/components/dashboard-chart";
 import { Pagination } from "@/components/ui/pagination";
+import { SpinInput } from "@/components/ui/spin-input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/context/auth-context";
@@ -110,19 +111,19 @@ export default function DashboardPage() {
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold text-zinc-100">Props Dashboard</h1>
           <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="number"
-              placeholder="Min hit rate %"
-              className="w-28 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+            <SpinInput
+              placeholder="Hit %"
               value={minHitRate}
-              onChange={(e) => setMinHitRate(e.target.value)}
+              onChange={setMinHitRate}
+              min={0}
+              max={100}
             />
-            <input
-              type="number"
-              placeholder="Min edge %"
-              className="w-28 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+            <SpinInput
+              placeholder="Edge %"
               value={minEdge}
-              onChange={(e) => setMinEdge(e.target.value)}
+              onChange={setMinEdge}
+              min={0}
+              max={100}
             />
           </div>
         </div>

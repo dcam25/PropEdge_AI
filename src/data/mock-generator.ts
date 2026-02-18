@@ -1,10 +1,8 @@
 /**
- * Mock data generator using mocker-data-generator.
- * Use generateMockProps(count, seed) for large deterministic datasets.
+ * Deterministic mock data generator (SSR-safe, no faker/mocker).
+ * Uses Mulberry32 PRNG for identical server/client output.
  */
 
-import mocker from "mocker-data-generator";
-import { faker } from "@faker-js/faker";
 import type { Prop, SportId } from "@/types";
 
 const SPORTS: SportId[] = ["nba", "nfl", "mlb", "nhl", "wnba", "lol", "cs2", "valorant"];
@@ -22,7 +20,7 @@ const PROP_TYPES: Record<SportId, string[]> = {
 const TEAMS: Record<SportId, string[]> = {
   nba: ["LAL", "BOS", "GSW", "MIA", "MIL", "DEN", "PHX", "DAL"],
   nfl: ["KC", "BUF", "PHI", "DAL", "SF", "MIA", "BAL", "CIN"],
-  mlb: ["NYY", "LAD", "HOU", "ATL", "PHI", "SD", "NYY", "BOS"],
+  mlb: ["NYY", "LAD", "HOU", "ATL", "PHI", "SD", "BOS"],
   nhl: ["EDM", "COL", "TB", "FLA", "TOR", "VGK", "CAR", "BOS"],
   wnba: ["LV", "NY", "CHI", "SEA", "CON", "PHX", "MIN", "ATL"],
   lol: ["T1", "Gen.G", "JDG", "BLG", "C9", "G2", "FNC", "DK"],
@@ -30,110 +28,84 @@ const TEAMS: Record<SportId, string[]> = {
   valorant: ["Sentinels", "LOUD", "DRX", "PRX", "FUT", "FNATIC", "Leviatan", "KRU"],
 };
 
-let _propCounter = 0;
+const FIRST_NAMES = [
+  "LeBron", "Stephen", "Giannis", "Luka", "Kevin", "Jayson", "Patrick", "Josh",
+  "Shohei", "Connor", "Aja", "Faker", "s1mple", "TenZ", "Anthony", "Devin",
+  "Trae", "Donovan", "Zion", "Ja", "Damian", "Jimmy", "Kawhi", "Joel",
+];
 
-const propSchema = {
-  sport: {
-    values: SPORTS,
-  },
-  player: {
-    faker: "person.fullName",
-  },
-  team: {
-    function: function (this: { object: { sport: SportId } }) {
-      const teams = TEAMS[this.object.sport];
-      return faker.helpers.arrayElement(teams);
-    },
-  },
-  opponent: {
-    function: function (this: { object: { sport: SportId; team: string } }) {
-      const teams = TEAMS[this.object.sport].filter((t) => t !== this.object.team);
-      return faker.helpers.arrayElement(teams.length ? teams : TEAMS[this.object.sport]);
-    },
-  },
-  propType: {
-    function: function (this: { object: { sport: SportId } }) {
-      return faker.helpers.arrayElement(PROP_TYPES[this.object.sport]);
-    },
-  },
-  line: {
-    function: function (this: { object: { sport: SportId; propType: string } }) {
-      const sport = this.object.sport;
-      if (sport === "nba" || sport === "wnba") return faker.number.int({ min: 5, max: 35 });
-      if (sport === "nfl") return faker.number.int({ min: 50, max: 400 });
-      if (sport === "mlb") return faker.number.int({ min: 0, max: 5 });
-      if (sport === "nhl") return faker.number.int({ min: 0, max: 4 });
-      if (sport === "lol" || sport === "cs2" || sport === "valorant")
-        return faker.number.int({ min: 5, max: 30 });
-      return faker.number.int({ min: 1, max: 20 });
-    },
-  },
-  hitRate: {
-    function: function () {
-      return Math.round(faker.number.float({ min: 0.4, max: 0.9 }) * 100) / 100;
-    },
-  },
-  streak: {
-    function: function () {
-      return faker.number.int({ min: 0, max: 6 });
-    },
-  },
-  modelEdge: {
-    function: function () {
-      return Math.round(faker.number.float({ min: 50, max: 78 }) * 10) / 10;
-    },
-  },
-  lastGames: {
-    function: function (this: { object: { line: number; sport: SportId } }) {
-      const line = Number(this.object.line) || 15;
-      const base = typeof line === "number" ? line : 15;
-      return Array.from({ length: 10 }, () =>
-        faker.number.int({ min: Math.max(0, base - 8), max: base + 8 })
-      );
-    },
-  },
-  supportingStats: {
-    function: function (this: { object: { lastGames: number[]; hitRate: number } }) {
-      const games = this.object.lastGames;
-      const avg = games.length ? games.reduce((a, b) => a + b, 0) / games.length : 0;
-      return {
-        avg: Math.round(avg * 10) / 10,
-        trend: faker.number.int({ min: -2, max: 2 }),
-      };
-    },
-  },
-  date: {
-    static: "2025-02-18",
-  },
-};
+const LAST_NAMES = [
+  "James", "Curry", "Antetokounmpo", "Doncic", "Durant", "Tatum", "Mahomes", "Allen",
+  "Ohtani", "McDavid", "Wilson", "Lee", "Kostyliev", "Tyson", "Davis", "Booker",
+  "Young", "Mitchell", "Williamson", "Morant", "Lillard", "Butler", "Leonard", "Embiid",
+];
+
+function mulberry32(seed: number) {
+  return function () {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function pick<T>(arr: T[], r: () => number): T {
+  return arr[Math.floor(r() * arr.length)];
+}
 
 /**
- * Generate mock props. Uses faker.seed for deterministic output (SSR-safe).
- * @param count Number of props to generate
- * @param seed Optional seed for reproducibility (default: 42)
+ * Generate mock props. Fully deterministic (SSR-safe).
  */
 export function generateMockProps(count: number, seed = 42): Prop[] {
-  faker.seed(seed);
-  _propCounter = 0;
+  const r = mulberry32(seed);
+  const props: Prop[] = [];
 
-  const data = mocker()
-    .addGenerator("faker", faker)
-    .schema(
-      "prop",
-      {
-        ...propSchema,
-        id: {
-          function: function (this: { object: { sport: string } }) {
-            _propCounter += 1;
-            return `${this.object.sport}-${_propCounter}`;
-          },
-        },
+  for (let i = 0; i < count; i++) {
+    const sport = pick(SPORTS, r);
+    const teams = TEAMS[sport];
+    const team = pick(teams, r);
+    const others = teams.filter((t) => t !== team);
+    const opponent = others.length > 0 ? pick(others, r) : team;
+    const propType = pick(PROP_TYPES[sport], r);
+    const firstName = pick(FIRST_NAMES, r);
+    const lastName = pick(LAST_NAMES, r);
+
+    let line: number;
+    if (sport === "nba" || sport === "wnba") line = 5 + Math.floor(r() * 31);
+    else if (sport === "nfl") line = 50 + Math.floor(r() * 351);
+    else if (sport === "mlb") line = Math.floor(r() * 6);
+    else if (sport === "nhl") line = Math.floor(r() * 5);
+    else line = 5 + Math.floor(r() * 26);
+
+    const hitRate = Math.round((0.4 + r() * 0.5) * 100) / 100;
+    const streak = Math.floor(r() * 7);
+    const modelEdge = Math.round((50 + r() * 28) * 10) / 10;
+    const lastGames = Array.from({ length: 10 }, () =>
+      Math.max(0, line - 8 + Math.floor(r() * 17))
+    );
+    const avg = lastGames.reduce((a, b) => a + b, 0) / 10;
+
+    props.push({
+      id: `${sport}-${i + 1}`,
+      sport,
+      player: `${firstName} ${lastName}`,
+      team,
+      opponent,
+      propType,
+      line,
+      hitRate,
+      streak,
+      modelEdge,
+      lastGames,
+      supportingStats: {
+        avg: Math.round(avg * 10) / 10,
+        trend: Math.floor(r() * 5) - 2,
       },
-      count
-    )
-    .buildSync();
+      date: "2025-02-18",
+    });
+  }
 
-  return data.prop as Prop[];
+  return props;
 }
 
 export const SPORT_LABELS: Record<SportId, string> = {
