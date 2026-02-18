@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { MOCK_PROPS, SPORT_LABELS } from "@/data/mock-props";
 import type { Prop, SportId } from "@/types";
@@ -8,6 +8,7 @@ import { PropTable } from "@/components/prop-table";
 import { PropDetailModal } from "@/components/prop-detail-modal";
 import { PickBuilder } from "@/components/pick-builder";
 import { DashboardChart } from "@/components/dashboard-chart";
+import { Pagination } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/context/auth-context";
@@ -32,6 +33,8 @@ export default function DashboardPage() {
   const [detailProp, setDetailProp] = useState<Prop | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [picks, setPicks] = useState<Prop[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const { user } = useAuth();
 
   const filteredProps = useMemo(() => {
@@ -47,6 +50,16 @@ export default function DashboardPage() {
 
     return list;
   }, [sportFilter, minHitRate, minEdge]);
+
+  const paginatedProps = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredProps.slice(start, start + pageSize);
+  }, [filteredProps, page, pageSize]);
+
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(filteredProps.length / pageSize));
+    if (page > maxPage) setPage(1);
+  }, [filteredProps.length, pageSize, page]);
 
   const handleAddToSlip = (prop: Prop) => {
     if (picks.some((p) => p.id === prop.id)) return;
@@ -130,14 +143,23 @@ export default function DashboardPage() {
               </TabsList>
               {SPORT_TABS.map((tab) => (
                 <TabsContent key={tab.value} value={tab.value} className="mt-0">
-                  <PropTable
-                    props={filteredProps}
-                    onAddToSlip={handleAddToSlip}
-                    onViewDetail={(p) => {
-                      setDetailProp(p);
-                      setDetailOpen(true);
-                    }}
-                  />
+                  <div className="overflow-hidden rounded-lg border border-zinc-800">
+                    <PropTable
+                      props={paginatedProps}
+                      onAddToSlip={handleAddToSlip}
+                      onViewDetail={(p) => {
+                        setDetailProp(p);
+                        setDetailOpen(true);
+                      }}
+                    />
+                    <Pagination
+                      page={page}
+                      pageSize={pageSize}
+                      totalItems={filteredProps.length}
+                      onPageChange={setPage}
+                      onPageSizeChange={setPageSize}
+                    />
+                  </div>
                 </TabsContent>
               ))}
             </Tabs>

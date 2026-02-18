@@ -161,7 +161,7 @@ export function DashboardChart({ props }: DashboardChartProps) {
               />
               <Area
                 yAxisId="edge"
-                type="monotone"
+                type="linear"
                 dataKey="edge"
                 stroke="#10b981"
                 strokeWidth={2}
@@ -169,7 +169,7 @@ export function DashboardChart({ props }: DashboardChartProps) {
               />
               <Line
                 yAxisId="hit"
-                type="monotone"
+                type="linear"
                 dataKey="hitRate"
                 stroke="#a78bfa"
                 strokeWidth={1.5}

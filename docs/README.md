@@ -68,6 +68,15 @@ Each factor (recent_form, matchup_difficulty, pace, etc.) returns a 0–100 scor
 
 See `src/lib/model-scoring.ts`.
 
+## Mock Data
+
+Props and time-series use `mocker-data-generator` + `@faker-js/faker` for scalable mock data:
+
+- **Props:** `generateMockProps(count, seed)` in `src/data/mock-generator.ts` — generates 200 props by default (deterministic via seed for SSR hydration).
+- **Time-series:** `src/data/mock-timeseries.ts` — 90-day chart data.
+
+To change volume: edit `MOCK_PROPS` in `src/data/mock-props.ts`, e.g. `generateMockProps(500, 42)`.
+
 ## Real Props API Integration
 
 To plug in a real odds/props API (e.g. OpticOdds):

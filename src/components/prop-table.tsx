@@ -22,7 +22,7 @@ export function PropTable({ props, onAddToSlip, onViewDetail }: PropTableProps) 
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-800">
+    <div className="overflow-x-auto border-b border-zinc-800">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-800 bg-zinc-900/80">

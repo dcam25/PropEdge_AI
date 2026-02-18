@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@faker-js/faker": "^10.3.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-select": "^2.1.4",
@@ -21,6 +22,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.2",
     "lucide-react": "^0.468.0",
+    "mocker-data-generator": "^3.0.3",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
