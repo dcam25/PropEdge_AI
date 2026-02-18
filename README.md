@@ -1,6 +1,95 @@
 # PropEdge AI - Ultra-MVP
 
-Sports props analytics web app: research player props, build custom models, get AI insights.
+Sports props analytics web app: research player props, build custom models, and get AI-powered insights.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Framework** | Next.js 16 (App Router) |
+| **Runtime** | React 19 |
+| **Language** | TypeScript 5 |
+| **Styling** | Tailwind CSS v4 |
+| **Auth & Database** | Supabase |
+| **Payments** | Stripe |
+| **AI** | OpenAI-compatible API (OpenAI, Grok, Claude, etc.) |
+
+---
+
+## React Modules & Libraries
+
+### Core React
+- **react** (19.2) – UI library, hooks (`useState`, `useEffect`, `useMemo`, `useContext`, `createContext`)
+- **react-dom** (19.2) – DOM rendering
+
+### Forms
+- **react-hook-form** (7.x) – Form state, validation, and submission for login/signup. Reduces re-renders and provides built-in validation.
+
+### UI Components (Radix UI)
+- **@radix-ui/react-dialog** – Accessible modal dialogs (prop detail, AI insight)
+- **@radix-ui/react-tabs** – Sport filter tabs on dashboard
+- **@radix-ui/react-slot** – Polymorphic `asChild` prop for Button
+- **@radix-ui/react-dropdown-menu** – Dropdown menus (available)
+- **@radix-ui/react-select** – Select inputs (available)
+- **@radix-ui/react-toast** – Toast notifications (available)
+
+### Utilities
+- **class-variance-authority (cva)** – Variant-based styling for Button (default, outline, ghost, etc.)
+- **clsx** – Conditional class names
+- **tailwind-merge** – Merge Tailwind classes without conflicts
+- **lucide-react** – Icons (Zap, Copy, Trash2, X, etc.)
+
+### Next.js
+- **next** (16.1) – App Router, `Link`, `useRouter`, API routes, server components
+- **next/font** – Geist Sans & Geist Mono
+
+---
+
+## Integrated Platforms
+
+### Supabase
+- **Auth** – Email/password signup and login
+- **PostgreSQL** – `profiles`, `user_models`, `stripe_customers`
+- **Row Level Security (RLS)** – Per-user data access
+- **Realtime** – Available for future live updates
+
+**Packages:** `@supabase/supabase-js`, `@supabase/ssr` (for Next.js server/client auth)
+
+### Stripe
+- **Checkout** – One-time subscription flow ($19.99/mo)
+- **Customer Portal** – Manage/cancel subscriptions
+- **Webhooks** – Sync subscription status to Supabase `profiles.is_premium`
+
+**Package:** `stripe`
+
+### AI (OpenAI-compatible)
+- **Chat completions** – Prop insight generation via `/api/ai-insight`
+- **Providers** – OpenAI, Grok, Claude, or any API using the OpenAI format
+
+**Config:** `AI_API_KEY`, `AI_API_URL`, `AI_MODEL` in `.env`
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── (auth)/login, signup     # Auth pages
+│   ├── api/                     # AI insight, Stripe checkout/webhook/portal
+│   ├── dashboard/               # Props table + pick builder
+│   ├── models/                  # Model builder
+│   └── pricing/                 # Subscription plans
+├── components/                  # UI + feature components
+├── context/                     # AuthProvider
+├── data/                        # Mock props
+├── lib/                         # Supabase clients, model scoring, utils
+└── types/                       # TypeScript types
+```
+
+---
 
 ## Quick Start
 
