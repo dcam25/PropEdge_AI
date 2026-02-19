@@ -36,6 +36,9 @@ export default function PricingPage() {
             <Link href="/models" className="text-sm text-zinc-400 hover:text-zinc-100">
               My Models
             </Link>
+            <Link href="/profile" className="text-sm text-zinc-400 hover:text-zinc-100">
+              Profile
+            </Link>
             {!user && (
               <Link href="/login">
                 <Button size="sm">Sign in</Button>

@@ -20,6 +20,8 @@ interface AuthContextType {
   isUpdatingProfile: boolean;
   canUseAIInsight: () => boolean;
   incrementAIInsight: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+  updateProfile: (updates: Partial<Pick<Profile, "first_name" | "last_name" | "birthday">>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -103,6 +105,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (profile?.ai_insights_used_today ?? 0) < FREE_AI_LIMIT;
   }
 
+  async function refreshProfile() {
+    if (user) await fetchProfile(user.id);
+  }
+
+  async function updateProfile(updates: Partial<Pick<Profile, "first_name" | "last_name" | "birthday">>) {
+    if (!user) return;
+    setIsUpdatingProfile(true);
+    try {
+      const dbUpdates: Record<string, string | null> = {
+        updated_at: new Date().toISOString(),
+      };
+      if ("first_name" in updates) dbUpdates.first_name = updates.first_name ?? null;
+      if ("last_name" in updates) dbUpdates.last_name = updates.last_name ?? null;
+      if ("birthday" in updates) dbUpdates.birthday = updates.birthday ?? null;
+      const { error } = await supabase.from("profiles").update(dbUpdates).eq("id", user.id);
+      if (error) throw error;
+      setProfile((p) => (p ? { ...p, ...updates } : p));
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  }
+
   async function incrementAIInsight() {
     if (!user) return;
     setIsUpdatingProfile(true);
@@ -139,6 +163,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isUpdatingProfile,
         canUseAIInsight,
         incrementAIInsight,
+        refreshProfile,
+        updateProfile,
       }}
     >
       {children}

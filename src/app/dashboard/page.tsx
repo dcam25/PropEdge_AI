@@ -13,6 +13,8 @@ import { SpinInput } from "@/components/ui/spin-input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/context/auth-context";
+import { useActiveModel } from "@/hooks/use-active-model";
+import { computeModelEdge } from "@/lib/model-scoring";
 import { SignOutButton } from "@/components/sign-out-button";
 
 const SPORT_TABS: { value: SportId | "all"; label: string }[] = [
@@ -37,11 +39,20 @@ export default function DashboardPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const { user } = useAuth();
+  const { activeModel } = useActiveModel(user?.id);
 
   const filteredProps = useMemo(() => {
     let list = sportFilter === "all"
       ? MOCK_PROPS
       : MOCK_PROPS.filter((p) => p.sport === sportFilter);
+
+    // Apply user's active model to compute edge, or use mock modelEdge
+    if (activeModel) {
+      list = list.map((p) => ({
+        ...p,
+        modelEdge: computeModelEdge(p, activeModel),
+      }));
+    }
 
     const minHr = parseFloat(minHitRate);
     if (!Number.isNaN(minHr)) list = list.filter((p) => p.hitRate >= minHr / 100);
@@ -50,7 +61,7 @@ export default function DashboardPage() {
     if (!Number.isNaN(minE)) list = list.filter((p) => p.modelEdge >= minE);
 
     return list;
-  }, [sportFilter, minHitRate, minEdge]);
+  }, [sportFilter, minHitRate, minEdge, activeModel]);
 
   const paginatedProps = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -92,6 +103,9 @@ export default function DashboardPage() {
           <nav className="flex items-center gap-4">
             <Link href="/models" className="text-sm text-zinc-400 hover:text-zinc-100">
               My Models
+            </Link>
+            <Link href="/profile" className="text-sm text-zinc-400 hover:text-zinc-100">
+              Profile
             </Link>
             <Link href="/pricing" className="text-sm text-zinc-400 hover:text-zinc-100">
               Pricing
