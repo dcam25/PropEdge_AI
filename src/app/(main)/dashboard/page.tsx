@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
-import { MOCK_PROPS, SPORT_LABELS } from "@/data/mock-props";
+import { MOCK_PROPS } from "@/data/mock-props";
 import type { Prop, SportId } from "@/types";
 import { PropTable } from "@/components/prop-table";
 import { PropDetailModal } from "@/components/prop-detail-modal";
@@ -10,12 +9,10 @@ import { PickBuilder } from "@/components/pick-builder";
 import { DashboardChart } from "@/components/dashboard-chart";
 import { Pagination } from "@/components/ui/pagination";
 import { SpinInput } from "@/components/ui/spin-input";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useAuth } from "@/context/auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import { useActiveModel } from "@/hooks/use-active-model";
 import { computeModelEdge } from "@/lib/model-scoring";
-import { SignOutButton } from "@/components/sign-out-button";
 
 const SPORT_TABS: { value: SportId | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -46,7 +43,6 @@ export default function DashboardPage() {
       ? MOCK_PROPS
       : MOCK_PROPS.filter((p) => p.sport === sportFilter);
 
-    // Apply user's active model to compute edge, or use mock modelEdge
     if (activeModel) {
       list = list.map((p) => ({
         ...p,
@@ -94,33 +90,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-          <Link href="/" className="font-bold text-emerald-400">
-            PropEdge AI
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/models" className="text-sm text-zinc-400 hover:text-zinc-100">
-              My Models
-            </Link>
-            <Link href="/profile" className="text-sm text-zinc-400 hover:text-zinc-100">
-              Profile
-            </Link>
-            <Link href="/pricing" className="text-sm text-zinc-400 hover:text-zinc-100">
-              Pricing
-            </Link>
-            {user ? (
-              <SignOutButton />
-            ) : (
-              <Link href="/login">
-                <Button size="sm">Sign in</Button>
-              </Link>
-            )}
-          </nav>
-        </div>
-      </header>
-
+    <>
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold text-zinc-100">Props Dashboard</h1>
@@ -193,13 +163,6 @@ export default function DashboardPage() {
         onOpenChange={setDetailOpen}
         onGetAIInsight={handleGetAIInsight}
       />
-
-      <footer className="mt-12 border-t border-zinc-800 py-6 text-center text-xs text-zinc-500">
-        <p>
-          Disclaimer: PropEdge AI is for entertainment and research only. No guarantees. Gambling involves risk.{" "}
-          <Link href="/terms" className="underline">Terms</Link> · <Link href="/privacy" className="underline">Privacy</Link>
-        </p>
-      </footer>
-    </div>
+    </>
   );
 }

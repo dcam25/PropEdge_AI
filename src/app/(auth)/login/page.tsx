@@ -120,7 +120,7 @@ export default function LoginPage() {
               onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
               className="space-y-4"
             >
-              <div>
+              <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }}>
                 <label className="block text-sm font-medium text-zinc-400">Email</label>
                 <input
                   type="email"
@@ -138,8 +138,8 @@ export default function LoginPage() {
                     {passwordForm.formState.errors.email.message}
                   </p>
                 )}
-              </div>
-              <div>
+              </motion.div>
+              <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }}>
                 <label className="block text-sm font-medium text-zinc-400">Password</label>
                 <input
                   type="password"
@@ -151,16 +151,18 @@ export default function LoginPage() {
                     {passwordForm.formState.errors.password.message}
                   </p>
                 )}
-              </div>
+              </motion.div>
               {error && <p className="text-sm text-red-400">{error}</p>}
               {success && <p className="text-sm text-emerald-400">{success}</p>}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={passwordForm.formState.isSubmitting}
-              >
-                {passwordForm.formState.isSubmitting ? "Signing in..." : "Sign in"}
-              </Button>
+              <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={passwordForm.formState.isSubmitting}
+                >
+                  {passwordForm.formState.isSubmitting ? "Signing in..." : "Sign in"}
+                </Button>
+              </motion.div>
               <button
                 type="button"
                 onClick={() => {
@@ -185,7 +187,7 @@ export default function LoginPage() {
               onSubmit={otpForm.handleSubmit(sendOtp)}
               className="space-y-4"
             >
-              <div>
+              <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }}>
                 <label className="block text-sm font-medium text-zinc-400">Email</label>
                 <input
                   type="email"
@@ -203,16 +205,18 @@ export default function LoginPage() {
                     {otpForm.formState.errors.email.message}
                   </p>
                 )}
-              </div>
+              </motion.div>
               {error && <p className="text-sm text-red-400">{error}</p>}
               {success && <p className="text-sm text-emerald-400">{success}</p>}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={otpForm.formState.isSubmitting}
-              >
-                {otpForm.formState.isSubmitting ? "Sending..." : "Email me a code"}
-              </Button>
+              <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={otpForm.formState.isSubmitting}
+                >
+                  {otpForm.formState.isSubmitting ? "Sending..." : "Email me a code"}
+                </Button>
+              </motion.div>
               <button
                 type="button"
                 onClick={() => {
@@ -236,10 +240,10 @@ export default function LoginPage() {
               onSubmit={otpVerifyForm.handleSubmit(verifyOtp)}
               className="space-y-4"
             >
-              <p className="text-sm text-zinc-400">
+              <motion.p layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }} className="text-sm text-zinc-400">
                 We sent a 6-digit code to <strong className="text-zinc-100">{email}</strong>
-              </p>
-              <div>
+              </motion.p>
+              <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }}>
                 <label className="block text-sm font-medium text-zinc-400">Verification code</label>
                 <input
                   type="text"
@@ -258,15 +262,17 @@ export default function LoginPage() {
                     {otpVerifyForm.formState.errors.otp.message}
                   </p>
                 )}
-              </div>
+              </motion.div>
               {error && <p className="text-sm text-red-400">{error}</p>}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={otpVerifyForm.formState.isSubmitting}
-              >
-                {otpVerifyForm.formState.isSubmitting ? "Verifying..." : "Verify"}
-              </Button>
+              <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={otpVerifyForm.formState.isSubmitting}
+                >
+                  {otpVerifyForm.formState.isSubmitting ? "Verifying..." : "Verify"}
+                </Button>
+              </motion.div>
               <button
                 type="button"
                 onClick={() => {

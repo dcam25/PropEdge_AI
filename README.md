@@ -26,6 +26,7 @@ Sports props analytics web app: research player props, build custom models, and 
 
 ### Forms
 - **react-hook-form** (7.x) – Form state, validation, and submission for login/signup. Reduces re-renders and provides built-in validation.
+- **zod** (4.x) – Schema validation via `@hookform/resolvers/zod`. Signup form enforces password strength: 8+ chars, 1+ special, 2+ upper, 2+ lower, 2+ numbers. Schemas live in `src/lib/validations/`.
 
 ### UI Components (Radix UI)
 - **@radix-ui/react-dialog** – Accessible modal dialogs (prop detail, AI insight)
@@ -56,6 +57,15 @@ Sports props analytics web app: research player props, build custom models, and 
 - **Realtime** – Available for future live updates
 
 **Packages:** `@supabase/supabase-js`, `@supabase/ssr` (for Next.js server/client auth)
+
+**Supabase clients** – Use the correct client for each context:
+
+| Context | Import | Use for |
+|---------|--------|---------|
+| **Browser** (client components, hooks) | `createClient` from `@/lib/supabase/client` | User-triggered actions, auth state, RLS queries from the frontend |
+| **Server** (API routes, Server Actions, Server Components) | `createClient` from `@/lib/supabase/server` | Auth-required API logic, webhooks, server-side data access |
+
+The server client uses `cookies()` from `next/headers` and **cannot run in the browser**. For auth-required actions from the frontend, either call the browser client directly or invoke an API route / Server Action that uses the server client.
 
 ### Stripe
 - **Checkout** – One-time subscription flow ($19.99/mo)
@@ -96,9 +106,9 @@ src/
 │   ├── models/                  # Model builder
 │   └── pricing/                 # Subscription plans
 ├── components/                  # UI + feature components
-├── context/                     # AuthProvider
+├── stores/                       # Zustand auth store
 ├── data/                        # Mock props
-├── lib/                         # Supabase clients, model scoring, utils
+├── lib/                         # Supabase clients, validations (Zod schemas), model scoring, utils
 └── types/                       # TypeScript types
 ```
 
