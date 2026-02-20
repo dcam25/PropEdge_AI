@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
@@ -206,7 +206,7 @@ function PurchaseModal({
   );
 }
 
-export default function ProfilePage() {
+function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, profile, loading, isUpdatingProfile, updateProfile, refreshProfile } = useAuth();
@@ -975,5 +975,21 @@ export default function ProfilePage() {
         </div>
       </motion.div>
     </main>
+  );
+}
+
+function ProfileFallback() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="text-zinc-500">Loading profile...</div>
+    </main>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<ProfileFallback />}>
+      <ProfileContent />
+    </Suspense>
   );
 }
