@@ -20,25 +20,29 @@ export default function HomePage() {
           Research multi-sport player props with custom models and AI-powered insights.
           NBA, NFL, MLB, NHL, WNBA, LoL, CS2, Valorant.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Link href="/dashboard">
-            <Button size="lg">View Props</Button>
-          </Link>
-          <Link href="/signup">
-            <Button size="lg" variant="outline">
-              Get Started
-            </Button>
-          </Link>
-          <Link href="/about">
-            <Button size="lg" variant="outline">
-              About
-            </Button>
-          </Link>
-          <Link href="/readme">
-            <Button size="lg" variant="outline">
-              Readme
-            </Button>
-          </Link>
+        <div className="mt-8 flex flex-col items-center gap-4">
+          <div className="flex gap-4">
+            <Link href="/dashboard">
+              <Button size="lg">View Props</Button>
+            </Link>
+            <Link href="/signup">
+              <Button size="lg" variant="outline">
+                Get Started
+              </Button>
+            </Link>
+          </div>
+          <div className="flex gap-4">
+            <Link href="/about">
+              <Button size="sm" variant="outline">
+                About
+              </Button>
+            </Link>
+            <Link href="/readme">
+              <Button size="sm" variant="outline">
+                Readme
+              </Button>
+            </Link>
+          </div>
         </div>
       </main>
 
