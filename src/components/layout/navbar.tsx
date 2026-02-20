@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/components/sign-out-button";
 import { PlanToolbar } from "@/components/plan-toolbar";
 import { useAuthStore, FREE_AI_LIMIT } from "@/stores/auth-store";
+
+const GITHUB_URL = "https://github.com/dcam25/PropEdge_AI";
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -42,6 +45,15 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-400 hover:text-zinc-100"
+            aria-label="GitHub source"
+          >
+            <Github className="h-5 w-5" />
+          </a>
           {user ? (
             <div className="flex items-center gap-3">
               {aiRemaining !== null && (

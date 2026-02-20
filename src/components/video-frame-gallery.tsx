@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 
-const DEFAULT_TIMESTAMPS = [6, 24, 28, 34, 37, 62, 100, 105, 120, 129, 136, 151]; // 0:06, 0:24, ... 2:31
+const DEFAULT_TIMESTAMPS = [6, 24, 28, 34, 37, 62, 100, 105, 120, 129, 136, 137, 151]; // 0:06, 0:24, ... 2:31
 
 const DEFAULT_DESCRIPTIONS = [
   "Project overview",
@@ -16,6 +16,7 @@ const DEFAULT_DESCRIPTIONS = [
   "API & Edge functions",
   "Stored procedures",
   "Auth users",
+  "Provider",
   "SQL editor",
   "Database schema",
   "Realtime",

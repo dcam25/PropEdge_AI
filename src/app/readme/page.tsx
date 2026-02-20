@@ -222,13 +222,22 @@ npm run dev`}
                     <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[105]} descriptions={["Auth users"]} />
                   </div>
                 </div>
+                <div id="supabase-provider" className="scroll-mt-24 pl-6">
+                  <h4 className="font-medium text-zinc-300">Provider</h4>
+                  <p className="mt-1 text-zinc-500">
+                    Auth providers in Supabase Dashboard → Authentication → Providers. Configure email, OAuth, and sign-in methods.
+                  </p>
+                  <div className="mt-3">
+                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[120]} descriptions={["Provider"]} />
+                  </div>
+                </div>
                 <div id="supabase-sql-editor" className="scroll-mt-24 pl-6">
                   <h4 className="font-medium text-zinc-300">SQL editor</h4>
                   <p className="mt-1 text-zinc-500">
                     Run SQL in Supabase Dashboard → SQL Editor. Useful for migrations and ad-hoc queries.
                   </p>
                   <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[120]} descriptions={["SQL editor"]} />
+                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[129]} descriptions={["SQL editor"]} />
                   </div>
                 </div>
                 <div id="supabase-schema" className="scroll-mt-24 pl-6">
@@ -237,7 +246,7 @@ npm run dev`}
                     Schema visualization in Supabase. Tables, relationships, and RLS policies.
                   </p>
                   <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[129]} descriptions={["Database schema"]} />
+                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[136]} descriptions={["Database schema"]} />
                   </div>
                 </div>
                 <div id="supabase-realtime" className="scroll-mt-24 pl-6">
@@ -246,7 +255,7 @@ npm run dev`}
                     Supabase Realtime for live subscriptions. Enable per-table in Database → Replication.
                   </p>
                   <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[136]} descriptions={["Realtime"]} />
+                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[137]} descriptions={["Realtime"]} />
                   </div>
                 </div>
                 <div id="supabase-project-settings" className="scroll-mt-24 pl-6">
@@ -276,8 +285,6 @@ npm run dev`}
                   <ImageCarousel
                     images={[
                       { src: "/Stripe_WebHooks.png", alt: "Stripe Webhooks", label: "Stripe Webhooks" },
-                      { src: "/Stripe_webhook_destination.png", alt: "Stripe Webhook Destination", label: "Webhook destination" },
-                      { src: "/Stripe_webhook_destination(2).png", alt: "Stripe Webhook Destination (2)", label: "Webhook destination (2)" },
                       { src: "/Stripe_transaction.png", alt: "Stripe Transactions", label: "Stripe Transactions" },
                     ]}
                   />
@@ -286,7 +293,17 @@ npm run dev`}
                       <p className="font-medium text-zinc-400">Webhook</p>
                       <ul className="mt-1.5 list-inside list-disc space-y-1">
                         <li>Configure in Stripe Dashboard → Developers → Webhooks</li>
-                        <li><strong>Webhook destination</strong> — Add endpoint URL; Stripe sends events to this destination. Use Event Destinations or classic Webhooks.</li>
+                        <li>
+                          <strong>Webhook destination</strong> — Add endpoint URL; Stripe sends events to this destination. Use Event Destinations or classic Webhooks.
+                          <div className="mt-3">
+                            <ImageCarousel
+                              images={[
+                                { src: "/Stripe_webhook_destination.png", alt: "Stripe Webhook Destination", label: "Webhook destination" },
+                                { src: "/Stripe_webhook_destination(2).png", alt: "Stripe Webhook Destination (2)", label: "Webhook destination (2)" },
+                              ]}
+                            />
+                          </div>
+                        </li>
                         <li>Endpoint: <code className="rounded bg-zinc-800 px-1">/api/stripe/webhook</code></li>
                         <li>
                           Subscribe to:

@@ -63,6 +63,7 @@ const README_NAV_GROUPS: (NavGroup | NavItem)[] = [
       { id: "supabase-api-edge", label: null, subtitle: "API & Edge functions" },
       { id: "supabase-stored-procedures", label: null, subtitle: "Stored procedures" },
       { id: "supabase-auth-users", label: null, subtitle: "Auth users" },
+      { id: "supabase-provider", label: null, subtitle: "Provider" },
       { id: "supabase-sql-editor", label: null, subtitle: "SQL editor" },
       { id: "supabase-schema", label: null, subtitle: "Database schema" },
       { id: "supabase-realtime", label: null, subtitle: "Realtime" },
