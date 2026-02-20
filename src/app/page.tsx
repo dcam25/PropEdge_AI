@@ -10,7 +10,10 @@ export default function HomePage() {
     <div className="flex min-h-screen flex-col bg-transparent">
       <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-800/50 bg-gradient-to-b from-zinc-950/90 to-transparent backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-          <span className="font-bold text-emerald-400">PropEdge AI</span>
+          <span className="flex items-center gap-2 font-bold text-emerald-400">
+            <img src="/icon.png" alt="" className="h-7 w-7 rounded" aria-hidden />
+            PropEdge AI
+          </span>
           <div className="flex items-center gap-4">
             <HomeHeaderNav />
             <a
