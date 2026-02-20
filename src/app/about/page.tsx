@@ -13,6 +13,9 @@ export default function AboutPage() {
             <Link href="/about" className="text-sm text-emerald-400">
               About
             </Link>
+            <Link href="/readme" className="text-sm text-zinc-400 hover:text-zinc-100">
+              Readme
+            </Link>
             <Link href="/login" className="text-sm text-zinc-400 hover:text-zinc-100">
               Sign in
             </Link>
@@ -24,7 +27,7 @@ export default function AboutPage() {
       </header>
 
       <main className="mx-auto max-w-4xl flex-1 px-4 py-16">
-        <h1 id="readme" className="scroll-mt-24 text-3xl font-bold text-zinc-100">
+        <h1 className="text-3xl font-bold text-zinc-100">
           About PropEdge AI
         </h1>
         <p className="mt-4 text-lg text-zinc-400">
@@ -32,6 +35,24 @@ export default function AboutPage() {
           build custom weighted models, and get AI-powered insights. Think of it as a lighter version of
           PickFinder + Rithmm—focused on speed to market and core features.
         </p>
+
+        <nav className="mt-8 flex flex-wrap gap-3">
+          <a href="#features" className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-100">
+            Features
+          </a>
+          <a href="#supabase" className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-100">
+            Supabase
+          </a>
+          <a href="#stripe" className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-100">
+            Stripe
+          </a>
+          <a href="#packages" className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-100">
+            Packages
+          </a>
+          <a href="#deploy" className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-100">
+            Deploy
+          </a>
+        </nav>
 
         <div className="mt-12 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50">
           <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-900">
@@ -51,7 +72,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        <section className="mt-16">
+        <section id="features" className="mt-16 scroll-mt-24">
           <h2 className="text-xl font-semibold text-zinc-100">What This App Does</h2>
           <ul className="mt-4 space-y-2 text-zinc-400">
             <li>• Dashboard with props table across NBA, NFL, MLB, NHL, WNBA, LoL, CS2, Valorant</li>
@@ -62,7 +83,7 @@ export default function AboutPage() {
           </ul>
         </section>
 
-        <section className="mt-16">
+        <section id="supabase" className="mt-16 scroll-mt-24">
           <h2 className="text-xl font-semibold text-zinc-100">Supabase Integration</h2>
           <p className="mt-2 text-zinc-400">
             Supabase powers authentication and data storage for PropEdge AI.
@@ -107,7 +128,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="mt-16">
+        <section id="stripe" className="mt-16 scroll-mt-24">
           <h2 className="text-xl font-semibold text-zinc-100">Stripe Integration</h2>
           <p className="mt-2 text-zinc-400">
             Stripe handles subscriptions and billing for the Premium plan.
@@ -156,7 +177,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="mt-16">
+        <section id="packages" className="mt-16 scroll-mt-24">
           <h2 className="text-xl font-semibold text-zinc-100">Packages</h2>
           <p className="mt-2 text-zinc-400">
             Key dependencies: Next.js 16, React 19, TypeScript, Tailwind v4, Radix UI, react-hook-form, zod, Zustand, flowbite-react (Datepicker), framer-motion, recharts, sonner, Stripe, Supabase.
@@ -166,7 +187,7 @@ export default function AboutPage() {
           </p>
         </section>
 
-        <section className="mt-16">
+        <section id="deploy" className="mt-16 scroll-mt-24">
           <h2 className="text-xl font-semibold text-zinc-100">Vercel Deploy</h2>
           <p className="mt-2 text-zinc-400">
             PropEdge AI is designed to deploy on Vercel. Connect your GitHub repo, add environment variables (Supabase, Stripe, AI keys), and configure the Stripe webhook URL to your Vercel domain.
@@ -177,9 +198,12 @@ export default function AboutPage() {
           </ul>
         </section>
 
-        <div className="mt-16 flex gap-4">
+        <div className="mt-16 flex flex-wrap gap-4">
           <Link href="/">
             <Button variant="outline">Back to Home</Button>
+          </Link>
+          <Link href="/readme">
+            <Button variant="outline">Readme</Button>
           </Link>
           <Link href="/dashboard">
             <Button>View Dashboard</Button>

@@ -14,8 +14,8 @@ export default function ReadmePage() {
             <Link href="/about" className="text-sm text-zinc-400 hover:text-zinc-100">
               About
             </Link>
-            <Link href="/plan" className="text-sm text-zinc-400 hover:text-zinc-100">
-              Plan
+            <Link href="/readme" className="text-sm text-emerald-400">
+              Readme
             </Link>
             <Link href="/login" className="text-sm text-zinc-400 hover:text-zinc-100">
               Sign in
@@ -29,9 +29,27 @@ export default function ReadmePage() {
 
       <main className="mx-auto max-w-4xl flex-1 px-4 py-16">
         <h1 className="text-3xl font-bold text-zinc-100">README</h1>
-        <p className="mt-2 text-zinc-500">PropEdge AI - Ultra-MVP</p>
+        <p className="mt-2 text-lg text-zinc-500">PropEdge AI - Ultra-MVP · Tech stack, quick start, and deployment guide</p>
 
-        <Card className="mt-8 border-zinc-800 bg-zinc-900/50">
+        <nav className="mt-8 flex flex-wrap gap-3">
+          <a href="#tech-stack" className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-100">
+            Tech Stack
+          </a>
+          <a href="#quick-start" className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-100">
+            Quick Start
+          </a>
+          <a href="#packages" className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-100">
+            Packages
+          </a>
+          <a href="#features" className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-100">
+            Features
+          </a>
+          <a href="#deploy" className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-100">
+            Deploy
+          </a>
+        </nav>
+
+        <Card id="tech-stack" className="mt-8 scroll-mt-24 border-zinc-800 bg-zinc-900/50">
           <CardHeader>
             <CardTitle className="text-zinc-100">Tech Stack</CardTitle>
           </CardHeader>
@@ -47,19 +65,22 @@ export default function ReadmePage() {
           </CardContent>
         </Card>
 
-        <Card className="mt-6 border-zinc-800 bg-zinc-900/50">
+        <Card id="quick-start" className="mt-6 scroll-mt-24 border-zinc-800 bg-zinc-900/50">
           <CardHeader>
             <CardTitle className="text-zinc-100">Quick Start</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 font-mono text-sm text-zinc-400">
-            <p>npm install</p>
-            <p>cp .env.example .env.local</p>
-            <p># Fill in Supabase, Stripe, AI keys</p>
-            <p>npm run dev</p>
+          <CardContent className="space-y-3">
+            <pre className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-950 p-4 font-mono text-sm text-zinc-400">
+{`npm install
+cp .env.example .env.local
+# Fill in Supabase, Stripe, AI keys
+npm run dev`}
+            </pre>
+            <p className="text-sm text-zinc-500">Then open <code className="rounded bg-zinc-800 px-1">http://localhost:3000</code></p>
           </CardContent>
         </Card>
 
-        <Card className="mt-6 border-zinc-800 bg-zinc-900/50">
+        <Card id="packages" className="mt-6 scroll-mt-24 border-zinc-800 bg-zinc-900/50">
           <CardHeader>
             <CardTitle className="text-zinc-100">Packages</CardTitle>
           </CardHeader>
@@ -83,7 +104,7 @@ export default function ReadmePage() {
           </CardContent>
         </Card>
 
-        <Card className="mt-6 border-zinc-800 bg-zinc-900/50">
+        <Card id="deploy" className="mt-6 scroll-mt-24 border-zinc-800 bg-zinc-900/50">
           <CardHeader>
             <CardTitle className="text-zinc-100">Vercel Deploy</CardTitle>
           </CardHeader>
@@ -95,7 +116,7 @@ export default function ReadmePage() {
           </CardContent>
         </Card>
 
-        <Card className="mt-6 border-zinc-800 bg-zinc-900/50">
+        <Card id="features" className="mt-6 scroll-mt-24 border-zinc-800 bg-zinc-900/50">
           <CardHeader>
             <CardTitle className="text-zinc-100">Features</CardTitle>
           </CardHeader>
@@ -109,12 +130,15 @@ export default function ReadmePage() {
           </CardContent>
         </Card>
 
-        <div className="mt-12 flex gap-4">
+        <div className="mt-12 flex flex-wrap gap-4">
+          <Link href="/">
+            <Button variant="outline">Home</Button>
+          </Link>
           <Link href="/about">
             <Button variant="outline">About</Button>
           </Link>
-          <Link href="/">
-            <Button>Home</Button>
+          <Link href="/dashboard">
+            <Button>View Dashboard</Button>
           </Link>
         </div>
       </main>
