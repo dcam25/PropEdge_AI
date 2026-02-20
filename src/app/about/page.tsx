@@ -70,6 +70,20 @@ export default function AboutPage() {
               <li>• Pick builder with copy-for-PrizePicks/Underdog export</li>
               <li>• Free vs Premium plans with Stripe subscription</li>
             </ul>
+            <div className="mt-6 overflow-hidden rounded-xl border border-zinc-800">
+              <video
+                src="/Full.mp4"
+                controls
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full"
+              >
+                Your browser does not support the video tag.
+              </video>
+              <p className="border-t border-zinc-800 px-4 py-2 text-xs text-zinc-500">PropEdge AI — full app walkthrough</p>
+            </div>
           </section>
 
           <section id="supabase" className="mt-16 scroll-mt-24 py-8">
