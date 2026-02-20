@@ -80,6 +80,12 @@ Sports props analytics web app: research player props, build custom models, and 
 
 **Packages:** `@supabase/supabase-js`, `@supabase/ssr` (for Next.js server/client auth)
 
+### Supabase project video
+
+<video src="public/Supabase_project.mp4" controls width="640"></video>
+
+*Supabase project overview — auth, database tables, RLS, API, and more. See the Readme page in the app (`/readme`) for the full walkthrough with timestamps.*
+
 **Supabase clients** – Use the correct client for each context:
 
 | Context | Import | Use for |
@@ -90,9 +96,10 @@ Sports props analytics web app: research player props, build custom models, and 
 The server client uses `cookies()` from `next/headers` and **cannot run in the browser**. For auth-required actions from the frontend, either call the browser client directly or invoke an API route / Server Action that uses the server client.
 
 ### Stripe
-- **Checkout** – One-time subscription flow ($19.99/mo)
-- **Customer Portal** – Manage/cancel subscriptions
-- **Webhooks** – Sync subscription status to Supabase `profiles.is_premium`
+- **Checkout** – Subscription flow ($19.99/mo) via `/api/stripe/checkout`
+- **Customer Portal** – Manage/cancel via `/api/stripe/portal`
+- **Webhook** – `/api/stripe/webhook` handles `checkout.session.completed`, `customer.subscription.*`, `invoice.paid`; updates `profiles.is_premium`, `stripe_customers`, balance
+- **Balance** – Add credit ($10+ min) via `/api/stripe/charge-balance`; purchase Premium with balance via `/api/premium/purchase-with-balance`
 
 **Package:** `stripe`
 
@@ -109,10 +116,27 @@ The server client uses `cookies()` from `next/headers` and **cannot run in the b
 | Endpoint | Method | Purpose | Used in |
 |----------|--------|---------|---------|
 | `/api/ai-insight` | POST | Generate AI insight for a prop | Dashboard → Prop detail modal |
-| `/api/stripe/checkout` | POST | Create Stripe Checkout session | Pricing page → Subscribe button |
-| `/api/stripe/portal` | POST | Redirect to Stripe Customer Portal | Pricing page → Manage Subscription |
-| `/api/stripe/webhook` | POST | Receive Stripe subscription events | Stripe (external) |
+| `/api/stripe/checkout` | POST | Create Stripe Checkout session | Profile → Plan → Subscribe |
+| `/api/stripe/portal` | POST | Redirect to Stripe Customer Portal | Profile → Plan → Manage |
+| `/api/stripe/webhook` | POST | Receive Stripe events (subscription, checkout, invoice) | Stripe (external) |
+| `/api/stripe/charge-balance` | POST | Add balance credit ($10+ min) | Profile → Balance → Add balance |
+| `/api/stripe/subscription` | GET | Get current subscription status | Prop detail modal (Premium gate) |
+| `/api/premium/purchase-with-balance` | POST | Purchase Premium with Stripe balance | Profile → Plan → Upgrade |
+| `/api/invoices` | GET | Balance, transactions, subscription end | Profile → Balance & Transactions |
+| `/api/user/delete` | POST | Delete user account | Profile → Delete account |
 | `/auth/callback` | GET | Handle Supabase auth redirect (OTP, magic link) | Supabase redirect URL |
+
+### Stripe Webhook
+
+Configure in Stripe Dashboard → Developers → Webhooks. Add your **webhook destination** (endpoint URL) so Stripe knows where to send events. Endpoint: `https://your-domain.com/api/stripe/webhook`.
+
+**Events to subscribe:**
+- `checkout.session.completed` – Upsert stripe_customers, sync balance_credit
+- `customer.subscription.created`, `customer.subscription.updated` – Update profiles.is_premium
+- `customer.subscription.deleted` – Set profiles.is_premium = false
+- `invoice.paid` – Sync subscription payments, fallback user lookup
+
+Copy the webhook signing secret to `STRIPE_WEBHOOK_SECRET` in env.
 
 ---
 
@@ -166,11 +190,24 @@ npm run dev
 
 ## Features
 
-- Dashboard with props table (NBA, NFL, MLB, NHL, WNBA, LoL, CS2, Valorant)
-- Prop detail modal with AI insight
-- Pick builder with copy-for-PrizePicks export
-- Model builder with 7 weighted factors and backtesting
-- Auth (Supabase), Stripe subscription, free vs premium limits
+### Core
+- **Dashboard** – Props table across NBA, NFL, MLB, NHL, WNBA, LoL, CS2, Valorant; filter by sport, date, search
+- **Prop detail modal** – View prop stats, AI-powered insight (OpenAI/Grok/Claude), add to picks
+- **Pick builder** – Build a slip, copy-for-PrizePicks/Underdog export
+- **Model builder** – 7 weighted factors (recent form, matchup, pace, usage, home/away, rest, sample size), backtesting, set active model
+
+### Auth & Profile
+- **Auth** – Email/password signup & login, OTP (6-digit code), forgot password, email confirmation
+- **Profile** – Edit name, birthday; change password; delete account
+- **Plan** – Free vs Premium ($19.99/mo), upgrade via Stripe Checkout or balance
+
+### Balance & Transactions
+- **Balance** – Add credit ($10+ min) via Stripe; view balance and transaction history
+- **Purchase with balance** – Upgrade to Premium using Stripe customer balance
+
+### Limits
+- **Free** – 1 model, 5 AI insights/day
+- **Premium** – 10 models, unlimited AI insights
 
 ## About Page & Hero Image
 

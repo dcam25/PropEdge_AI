@@ -1,18 +1,32 @@
 import Link from "next/link";
+import { Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HomeHeaderNav } from "@/components/home-header-nav";
+
+const GITHUB_URL = "https://github.com/dcam25/PropEdge_AI";
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-zinc-950">
-      <header className="border-b border-zinc-800">
+      <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
           <span className="font-bold text-emerald-400">PropEdge AI</span>
-          <HomeHeaderNav />
+          <div className="flex items-center gap-4">
+            <HomeHeaderNav />
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-400 hover:text-zinc-100"
+              aria-label="GitHub source"
+            >
+              <Github className="h-5 w-5" />
+            </a>
+          </div>
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-4 text-center">
+      <main className="flex flex-1 flex-col items-center justify-center px-4 pt-14 text-center">
         <h1 className="text-4xl font-bold text-zinc-100 sm:text-5xl">
           Sports Props Analytics
         </h1>
@@ -31,16 +45,12 @@ export default function HomePage() {
               </Button>
             </Link>
           </div>
-          <div className="flex gap-4">
-            <Link href="/about">
-              <Button size="sm" variant="outline">
-                About
-              </Button>
+          <div className="flex gap-6 text-lg text-emerald-400">
+            <Link href="/about" className="hover:text-emerald-300 hover:underline">
+              About
             </Link>
-            <Link href="/readme">
-              <Button size="sm" variant="outline">
-                Readme
-              </Button>
+            <Link href="/readme" className="hover:text-emerald-300 hover:underline">
+              Readme
             </Link>
           </div>
         </div>
