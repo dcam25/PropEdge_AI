@@ -24,9 +24,9 @@ export default function HomePage() {
           <Link href="/dashboard">
             <Button size="lg">View Props</Button>
           </Link>
-          <Link href="/plan">
+          <Link href="/signup">
             <Button size="lg" variant="outline">
-              Pricing
+              Get Started
             </Button>
           </Link>
         </div>

@@ -2,27 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AnimatedModal } from "@/components/animated-modal";
 import { Button } from "@/components/ui/button";
 import type { Prop } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 
 interface PropDetailModalProps {
-  prop: Prop | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  prop: Prop;
+  hideModal: () => void;
   onGetAIInsight: (prop: Prop) => Promise<string>;
 }
 
 export function PropDetailModal({
   prop,
-  open,
-  onOpenChange,
+  hideModal,
   onGetAIInsight,
 }: PropDetailModalProps) {
   const [aiInsight, setAiInsight] = useState<string | null>(null);
@@ -41,7 +34,7 @@ export function PropDetailModal({
   }, [user, profile?.is_premium]);
 
   const handleGetInsight = async () => {
-    if (!prop || !user) return;
+    if (!user) return;
     if (!canUseAIInsight()) {
       alert("You've reached your daily limit of 5 AI insights. Upgrade to Premium for unlimited.");
       return;
@@ -58,8 +51,6 @@ export function PropDetailModal({
     }
   };
 
-  if (!prop) return null;
-
   const last10 = prop.lastGames;
   const remaining = user
     ? profile?.is_premium
@@ -70,12 +61,12 @@ export function PropDetailModal({
     : "Sign in to use";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{prop.player} — {prop.propType}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
+    <AnimatedModal
+      hideModal={hideModal}
+      title={`${prop.player} — ${prop.propType}`}
+      className="max-h-[90vh] overflow-y-auto"
+    >
+      <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div><span className="text-zinc-500">Team</span> {prop.team}</div>
             <div><span className="text-zinc-500">Opponent</span> @ {prop.opponent}</div>
@@ -144,7 +135,6 @@ export function PropDetailModal({
             )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+    </AnimatedModal>
   );
 }

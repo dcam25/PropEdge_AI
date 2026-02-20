@@ -1,23 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useModal } from "react-modal-hook";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
-} from "@/components/ui/dialog";
+import { AnimatedModal } from "@/components/animated-modal";
+import { DialogClose } from "@/components/ui/dialog";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { BirthdayCalendar } from "@/components/ui/birthday-calendar";
-import { passwordSchema } from "@/lib/validations/signup";
+import { PASSWORD_REQUIREMENTS, passwordChangeSchema } from "@/lib/validations/signup";
 import { profileSchema, profileSaveSchema } from "@/lib/validations/profile";
 import { PREMIUM_PRICE, PREMIUM_PERIOD } from "@/lib/prices";
 import type { InvoiceItem } from "@/types";
@@ -34,67 +31,196 @@ const SIDEBAR_LINKS: { id: ProfileTab; label: string }[] = [
   { id: "balance", label: "Balance & Invoices" },
 ];
 
+function DeleteAccountModal({
+  hideModal,
+  router,
+}: {
+  hideModal: () => void;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const handleDelete = async () => {
+    if (deleteConfirm !== "DELETE") return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch("/api/user/delete", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        hideModal();
+        router.push("/");
+        router.refresh();
+      } else {
+        alert(data.error ?? "Failed to delete account");
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+  return (
+    <AnimatedModal
+      hideModal={hideModal}
+      title="Delete account"
+      description="This will permanently delete your account and all data. This cannot be undone. Type &quot;DELETE&quot; below to confirm."
+    >
+      <div className="space-y-4">
+        <input
+          type="text"
+          placeholder='Type "DELETE" to confirm'
+          value={deleteConfirm}
+          onChange={(e) => setDeleteConfirm(e.target.value)}
+          className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+        />
+        <div className="flex justify-end gap-2">
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button
+            variant="outline"
+            className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+            disabled={deleteConfirm !== "DELETE" || deleteLoading}
+            onClick={handleDelete}
+          >
+            {deleteLoading ? "Deleting..." : "Delete account"}
+          </Button>
+        </div>
+      </div>
+    </AnimatedModal>
+  );
+}
+
+function PurchaseModal({
+  hideModal,
+  showChargeModal,
+  balance,
+  subscribeLoading,
+  setSubscribeLoading,
+  refreshProfile,
+  fetchInvoicesAndBalance,
+}: {
+  hideModal: () => void;
+  showChargeModal: () => void;
+  balance: number | null;
+  subscribeLoading: boolean;
+  setSubscribeLoading: (v: boolean) => void;
+  refreshProfile: () => Promise<void>;
+  fetchInvoicesAndBalance: () => void;
+}) {
+  return (
+    <AnimatedModal
+      hideModal={hideModal}
+      title="Upgrade to Premium"
+      description="Confirm this invoice to upgrade your account."
+    >
+      <div className="space-y-4">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="flex justify-between text-sm">
+            <span className="text-zinc-400">1 × PropEdge Premium</span>
+            <span className="font-medium text-zinc-100">$19.99</span>
+          </div>
+          <div className="mt-2 flex justify-between border-t border-zinc-800 pt-2 text-sm">
+            <span className="text-zinc-400">Total</span>
+            <span className="font-semibold text-zinc-100">$19.99 USD</span>
+          </div>
+        </div>
+        <p className="text-sm text-zinc-500">
+          Your balance:{" "}
+          <span className="font-medium text-zinc-100">
+            {(balance ?? 0) === 0
+              ? "$0.00"
+              : (balance ?? 0) < 0
+                ? `+$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`
+                : `-$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`}{" "}
+            USD
+          </span>
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          {(balance ?? 0) <= -1999 ? (
+            <Button
+              disabled={subscribeLoading}
+              onClick={async () => {
+                setSubscribeLoading(true);
+                try {
+                  const res = await fetch("/api/premium/purchase-with-balance", { method: "POST" });
+                  const data = await res.json();
+                  if (res.ok && data.success) {
+                    hideModal();
+                    await refreshProfile();
+                    fetchInvoicesAndBalance();
+                  } else {
+                    alert(data.error ?? "Failed to upgrade");
+                  }
+                } catch {
+                  alert("Failed to upgrade");
+                } finally {
+                  setSubscribeLoading(false);
+                }
+              }}
+              className="bg-emerald-600 hover:bg-emerald-500"
+            >
+              {subscribeLoading ? "Upgrading..." : "Confirm & upgrade"}
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  hideModal();
+                  showChargeModal();
+                }}
+              >
+                Add balance
+              </Button>
+              <Button
+                disabled={subscribeLoading}
+                onClick={async () => {
+                  setSubscribeLoading(true);
+                  try {
+                    const res = await fetch("/api/stripe/checkout", { method: "POST" });
+                    const data = await res.json();
+                    if (data.url) {
+                      hideModal();
+                      window.location.href = data.url;
+                    } else {
+                      alert(data.error ?? "Failed to start checkout");
+                    }
+                  } catch {
+                    alert("Failed to start checkout");
+                  } finally {
+                    setSubscribeLoading(false);
+                  }
+                }}
+                className="bg-emerald-600 hover:bg-emerald-500"
+              >
+                {subscribeLoading ? "Redirecting..." : "Pay with card"}
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </AnimatedModal>
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, profile, loading, isUpdatingProfile, updateProfile } = useAuth();
+  const { user, profile, loading, isUpdatingProfile, updateProfile, refreshProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<ProfileTab>("profile");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [birthday, setBirthday] = useState("");
   const [saved, setSaved] = useState(false);
   const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
   const [balance, setBalance] = useState<number | null>(null);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [chargeLoading, setChargeLoading] = useState(false);
-  const [chargeDialogOpen, setChargeDialogOpen] = useState(false);
   const [chargeAmount, setChargeAmount] = useState("10");
   const [addBalanceLoading, setAddBalanceLoading] = useState(false);
-  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [subscribeLoading, setSubscribeLoading] = useState(false);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [passwordSaved, setPasswordSaved] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const [profileErrors, setProfileErrors] = useState<{ firstName?: string; lastName?: string }>({});
-  const [emailError, setEmailError] = useState<string | null>(null);
 
-  const passwordRequirements = [
-    { label: "8+ characters", check: (p: string) => p.length >= 8 },
-    { label: "1+ special character", check: (p: string) => (p.match(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/g) || []).length >= 1 },
-    { label: "2+ uppercase letters", check: (p: string) => (p.match(/[A-Z]/g) || []).length >= 2 },
-    { label: "2+ lowercase letters", check: (p: string) => (p.match(/[a-z]/g) || []).length >= 2 },
-    { label: "2+ numbers", check: (p: string) => (p.match(/\d/g) || []).length >= 2 },
-  ];
-
-  useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (tab === "balance") setActiveTab("balance");
-    else if (tab === "plan") setActiveTab("plan");
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (profile) {
-      setFirstName(profile.first_name ?? "");
-      setLastName(profile.last_name ?? "");
-      setBirthday(profile.birthday ?? "");
-    }
-  }, [profile]);
-
-  useEffect(() => {
-    if (user) {
-      setEmail(user.email ?? "");
-    }
-  }, [user]);
-
-  const fetchInvoicesAndBalance = () => {
+  const fetchInvoicesAndBalance = useCallback(() => {
     if (!user) return;
     setInvoicesLoading(true);
     Promise.all([
@@ -110,7 +236,134 @@ export default function ProfilePage() {
         setInvoices([]);
       })
       .finally(() => setInvoicesLoading(false));
-  };
+  }, [user]);
+
+  const [showDeleteModal, hideDeleteModal] = useModal(
+    () => <DeleteAccountModal hideModal={hideDeleteModal} router={router} />,
+    [router]
+  );
+
+  const [showChargeModal, hideChargeModal] = useModal(
+    () => (
+      <AnimatedModal
+        hideModal={hideChargeModal}
+        title="Add balance"
+        description="Add credit to your account. Minimum $10. Credit is applied to future invoices."
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-zinc-400">Amount (USD)</label>
+            <SpinInput
+              value={chargeAmount}
+              onChange={setChargeAmount}
+              min={10}
+              step={1}
+              placeholder="10"
+              variant="pagination"
+              suffix="USD"
+              className="mt-1"
+            />
+            <p className="mt-1 text-xs text-zinc-500">Minimum $10</p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button
+              disabled={addBalanceLoading || parseFloat(chargeAmount) < 10}
+              onClick={async () => {
+                const amount = parseFloat(chargeAmount);
+                if (Number.isNaN(amount) || amount < 10) return;
+                setAddBalanceLoading(true);
+                try {
+                  const res = await fetch("/api/stripe/charge-balance", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ amount }),
+                  });
+                  const data = await res.json();
+                  if (data.url) {
+                    hideChargeModal();
+                    window.location.href = data.url;
+                  } else {
+                    alert(data.error ?? "Failed to start charge");
+                  }
+                } catch {
+                  alert("Failed to start charge");
+                } finally {
+                  setAddBalanceLoading(false);
+                }
+              }}
+            >
+              {addBalanceLoading ? "Opening..." : "Charge"}
+            </Button>
+          </div>
+        </div>
+      </AnimatedModal>
+    ),
+    [chargeAmount, addBalanceLoading]
+  );
+
+  const [showPurchaseModal, hidePurchaseModal] = useModal(
+    () => (
+      <PurchaseModal
+        hideModal={hidePurchaseModal}
+        showChargeModal={showChargeModal}
+        balance={balance}
+        subscribeLoading={subscribeLoading}
+        setSubscribeLoading={setSubscribeLoading}
+        refreshProfile={refreshProfile}
+        fetchInvoicesAndBalance={fetchInvoicesAndBalance}
+      />
+    ),
+    [balance, subscribeLoading, refreshProfile, fetchInvoicesAndBalance]
+  );
+
+  const [passwordSaved, setPasswordSaved] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+
+  const profileForm = useForm({
+    resolver: zodResolver(profileSaveSchema),
+    defaultValues: { firstName: "", lastName: "", birthday: "" },
+  });
+
+  const emailForm = useForm({
+    resolver: zodResolver(profileSchema.pick({ email: true })),
+    defaultValues: { email: "" },
+  });
+
+  const passwordForm = useForm({
+    resolver: zodResolver(passwordChangeSchema),
+    defaultValues: { password: "", confirmPassword: "" },
+    mode: "onChange",
+  });
+
+  const watchedPassword = passwordForm.watch("password");
+  const watchedConfirmPassword = passwordForm.watch("confirmPassword");
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "balance") setActiveTab("balance");
+    else if (tab === "plan") setActiveTab("plan");
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (profile) {
+      profileForm.reset({
+        firstName: profile.first_name ?? "",
+        lastName: profile.last_name ?? "",
+        birthday: profile.birthday ?? "",
+      });
+    }
+  }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (user) {
+      emailForm.reset({ email: user.email ?? "" });
+    }
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!user) return;
@@ -127,46 +380,27 @@ export default function ProfilePage() {
     }
   }, [user, searchParams, router]);
 
-  const handleSave = async () => {
-    const result = profileSaveSchema.safeParse({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      birthday: birthday.trim() || undefined,
-    });
-    if (!result.success) {
-      const issues = result.error.flatten().fieldErrors;
-      setProfileErrors({
-        firstName: issues.firstName?.[0],
-        lastName: issues.lastName?.[0],
-      });
-      return;
-    }
-    setProfileErrors({});
+  const handleSave = profileForm.handleSubmit(async (data) => {
     await updateProfile({
-      first_name: result.data.firstName || null,
-      last_name: result.data.lastName || null,
-      birthday: birthday.trim() || null,
+      first_name: data.firstName.trim() || null,
+      last_name: data.lastName.trim() || null,
+      birthday: data.birthday?.trim() || null,
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  };
+  });
 
-  const handleEmailUpdate = async () => {
-    const result = profileSchema.shape.email.safeParse(email.trim());
-    if (!result.success) {
-      setEmailError(result.error.issues[0]?.message ?? "Invalid email");
-      return;
-    }
-    setEmailError(null);
+  const handleEmailUpdate = emailForm.handleSubmit(async (data) => {
     if (!user) return;
+    if (data.email === user.email) return;
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ email: result.data });
+    const { error } = await supabase.auth.updateUser({ email: data.email });
     if (error) {
-      setEmailError(error.message);
+      emailForm.setError("email", { message: error.message });
     } else {
       alert("Check your email to confirm the new address.");
     }
-  };
+  });
 
   const handlePayBalance = async () => {
     setChargeLoading(true);
@@ -186,103 +420,21 @@ export default function ProfilePage() {
     }
   };
 
-  const handlePurchasePremium = async () => {
-    setSubscribeLoading(true);
-    try {
-      const res = await fetch("/api/stripe/checkout", { method: "POST" });
-      const data = await res.json();
-      if (data.url) {
-        setPurchaseDialogOpen(false);
-        window.location.href = data.url;
-      } else {
-        alert(data.error ?? "Failed to start checkout");
-      }
-    } catch {
-      alert("Failed to start checkout");
-    } finally {
-      setSubscribeLoading(false);
-    }
-  };
-
-  const handleAddBalance = async () => {
-    const amount = parseFloat(chargeAmount);
-    if (Number.isNaN(amount) || amount < 10) {
-      alert("Minimum charge is $10");
-      return;
-    }
-    setAddBalanceLoading(true);
-    try {
-      const res = await fetch("/api/stripe/charge-balance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        setChargeDialogOpen(false);
-        window.location.href = data.url;
-      } else {
-        alert(data.error ?? "Failed to start charge");
-      }
-    } catch {
-      alert("Failed to start charge");
-    } finally {
-      setAddBalanceLoading(false);
-    }
-  };
-
-  const handlePasswordUpdate = async () => {
-    if (!password || !passwordConfirm) {
-      alert("Please fill in both password fields.");
-      return;
-    }
-    if (password !== passwordConfirm) {
-      alert("Passwords do not match.");
-      return;
-    }
-    const result = passwordSchema.safeParse(password);
-    if (!result.success) {
-      alert(result.error.issues[0]?.message ?? "Password does not meet requirements.");
-      return;
-    }
+  const handlePasswordUpdate = passwordForm.handleSubmit(async (data) => {
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await supabase.auth.updateUser({ password: data.password });
     if (error) {
       alert(error.message);
     } else {
-      setPassword("");
-      setPasswordConfirm("");
+      passwordForm.reset();
       setPasswordSaved(true);
       setTimeout(() => setPasswordSaved(false), 2000);
     }
-  };
+  });
 
   const handleDeleteClick = () => {
-    setDeleteDialogOpen(true);
+    showDeleteModal();
   };
-
-  const handleDeleteAccount = async () => {
-    if (deleteConfirm !== "DELETE") return;
-    setDeleteLoading(true);
-    try {
-      const res = await fetch("/api/user/delete", { method: "POST" });
-      const data = await res.json();
-      if (res.ok) {
-        setDeleteDialogOpen(false);
-        router.push("/");
-        router.refresh();
-      } else {
-        alert(data.error ?? "Failed to delete account");
-      }
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
-  const hasChanges =
-    (profile?.first_name ?? "") !== firstName.trim() ||
-    (profile?.last_name ?? "") !== lastName.trim() ||
-    (profile?.birthday ?? "") !== birthday.trim();
 
   if (loading) {
     return (
@@ -352,72 +504,68 @@ export default function ProfilePage() {
                   <div className="mt-1 flex gap-2">
                     <input
                       type="email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        if (emailError) setEmailError(null);
-                      }}
+                      {...emailForm.register("email")}
                       className={cn(
                         "flex-1 rounded-lg border bg-zinc-900 px-3 py-2 text-zinc-100",
-                        emailError ? "border-red-500/50" : "border-zinc-700"
+                        emailForm.formState.errors.email ? "border-red-500/50" : "border-zinc-700"
                       )}
                     />
-                    <Button variant="outline" size="sm" onClick={handleEmailUpdate}>
+                    <Button variant="outline" size="sm" onClick={handleEmailUpdate} disabled={!emailForm.formState.isDirty}>
                       Update
                     </Button>
                   </div>
-                  {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
+                  {emailForm.formState.errors.email && (
+                    <p className="mt-1 text-sm text-red-400">{emailForm.formState.errors.email.message}</p>
+                  )}
                   <p className="mt-1 text-xs text-zinc-500">You may need to confirm the new email.</p>
                 </div>
                 <div className="flex gap-4">
                   <div className="flex-1">
                     <label className="block text-sm text-zinc-400">First name</label>
                     <input
-                      value={firstName}
-                      onChange={(e) => {
-                        setFirstName(e.target.value);
-                        if (profileErrors.firstName) setProfileErrors((p) => ({ ...p, firstName: undefined }));
-                      }}
+                      {...profileForm.register("firstName")}
                       className={cn(
                         "mt-1 w-full rounded-lg border bg-zinc-900 px-3 py-2 text-zinc-100",
-                        profileErrors.firstName ? "border-red-500/50" : "border-zinc-700"
+                        profileForm.formState.errors.firstName ? "border-red-500/50" : "border-zinc-700"
                       )}
                       placeholder="First name"
                     />
-                    {profileErrors.firstName && (
-                      <p className="mt-1 text-sm text-red-400">{profileErrors.firstName}</p>
+                    {profileForm.formState.errors.firstName && (
+                      <p className="mt-1 text-sm text-red-400">{profileForm.formState.errors.firstName.message}</p>
                     )}
                   </div>
                   <div className="flex-1">
                     <label className="block text-sm text-zinc-400">Last name</label>
                     <input
-                      value={lastName}
-                      onChange={(e) => {
-                        setLastName(e.target.value);
-                        if (profileErrors.lastName) setProfileErrors((p: { firstName?: string; lastName?: string }) => ({ ...p, lastName: undefined }));
-                      }}
+                      {...profileForm.register("lastName")}
                       className={cn(
                         "mt-1 w-full rounded-lg border bg-zinc-900 px-3 py-2 text-zinc-100",
-                        profileErrors.lastName ? "border-red-500/50" : "border-zinc-700"
+                        profileForm.formState.errors.lastName ? "border-red-500/50" : "border-zinc-700"
                       )}
                       placeholder="Last name"
                     />
-                    {profileErrors.lastName && (
-                      <p className="mt-1 text-sm text-red-400">{profileErrors.lastName}</p>
+                    {profileForm.formState.errors.lastName && (
+                      <p className="mt-1 text-sm text-red-400">{profileForm.formState.errors.lastName.message}</p>
                     )}
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm text-zinc-400">Birthday</label>
                   <div className="mt-1">
-                    <BirthdayCalendar
-                      value={birthday}
-                      onChange={setBirthday}
+                    <Controller
+                      control={profileForm.control}
+                      name="birthday"
+                      render={({ field }) => (
+                        <BirthdayCalendar
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                        />
+                      )}
                     />
                   </div>
                 </div>
                 <div className="flex items-center gap-3 pt-2">
-                  <Button disabled={!hasChanges || isUpdatingProfile} onClick={handleSave}>
+                  <Button disabled={!profileForm.formState.isDirty || isUpdatingProfile} onClick={handleSave}>
                     {isUpdatingProfile ? "Saving..." : saved ? "Saved" : "Save changes"}
                   </Button>
                   {saved && <span className="text-sm text-emerald-400">Profile updated.</span>}
@@ -459,14 +607,13 @@ export default function ProfilePage() {
                   <div className="relative mt-1">
                     <input
                       type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      {...passwordForm.register("password", {
+                        onBlur: () => setPasswordFocused(false),
+                      })}
                       onFocus={() => setPasswordFocused(true)}
-                      onBlur={() => setPasswordFocused(false)}
                       className={cn(
                         "w-full rounded-lg border bg-zinc-900 px-3 py-2 pr-10 text-zinc-100",
-                        password &&
-                          !passwordSchema.safeParse(password).success
+                        watchedPassword && passwordForm.formState.errors.password
                           ? "border-red-500/50"
                           : "border-zinc-700"
                       )}
@@ -494,8 +641,8 @@ export default function ProfilePage() {
                         transition={{ duration: 0.2, ease: "easeOut" }}
                         className="mt-2 space-y-1.5"
                       >
-                        {passwordRequirements.map((req, i) => {
-                          const met = req.check(password);
+                        {PASSWORD_REQUIREMENTS.map((req, i) => {
+                          const met = req.check(watchedPassword || "");
                           return (
                             <motion.li
                               key={req.label}
@@ -549,24 +696,21 @@ export default function ProfilePage() {
                       </motion.ul>
                     )}
                   </AnimatePresence>
-                  {password &&
-                    !passwordSchema.safeParse(password).success && (
-                      <p className="mt-1 text-sm text-red-400">
-                        {passwordSchema.safeParse(password).error?.issues[0]?.message ??
-                          "Password does not meet strength requirements"}
-                      </p>
-                    )}
+                  {watchedPassword && passwordForm.formState.errors.password && (
+                    <p className="mt-1 text-sm text-red-400">
+                      {passwordForm.formState.errors.password.message}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm text-zinc-400">Confirm password</label>
                   <div className="relative mt-1">
                     <input
                       type={showPasswordConfirm ? "text" : "password"}
-                      value={passwordConfirm}
-                      onChange={(e) => setPasswordConfirm(e.target.value)}
+                      {...passwordForm.register("confirmPassword")}
                       className={cn(
                         "w-full rounded-lg border bg-zinc-900 px-3 py-2 pr-10 text-zinc-100",
-                        passwordConfirm && password !== passwordConfirm
+                        watchedConfirmPassword && passwordForm.formState.errors.confirmPassword
                           ? "border-red-500/50"
                           : "border-zinc-700"
                       )}
@@ -585,13 +729,15 @@ export default function ProfilePage() {
                       )}
                     </button>
                   </div>
-                  {passwordConfirm && password !== passwordConfirm && (
-                    <p className="mt-1 text-sm text-red-400">Passwords do not match</p>
+                  {watchedConfirmPassword && passwordForm.formState.errors.confirmPassword && (
+                    <p className="mt-1 text-sm text-red-400">
+                      {passwordForm.formState.errors.confirmPassword.message}
+                    </p>
                   )}
                 </div>
                 <Button
                   onClick={handlePasswordUpdate}
-                  disabled={!password || !passwordConfirm || !passwordSchema.safeParse(password).success}
+                  disabled={!passwordForm.formState.isValid}
                 >
                   {passwordSaved ? "Saved" : "Update password"}
                 </Button>
@@ -639,7 +785,7 @@ export default function ProfilePage() {
                         : "Upgrade for more models and unlimited AI insights."}
                     </p>
 
-                    {profile?.is_premium && (
+                    {/* {profile?.is_premium && (
                       <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
                         {(profile.subscription_amount_cents ?? 0) > 0 && (
                           <p className="text-sm text-zinc-400">
@@ -649,21 +795,21 @@ export default function ProfilePage() {
                             </span>
                           </p>
                         )}
-                        {subscriptionEnd && (
+                        {subscriptionEnd && ( 
                           <p className="text-sm text-zinc-400">
                             Renews on{" "}
                             <span className="font-medium text-zinc-100">
                               {subscriptionEnd}
                             </span>
                           </p>
-                        )}
+                        )} 
                       </div>
-                    )}
+                    )} */}
 
                     {!profile?.is_premium && (
                       <Button
                         className="w-full bg-emerald-600 hover:bg-emerald-500"
-                        onClick={() => setPurchaseDialogOpen(true)}
+                        onClick={() => showPurchaseModal()}
                       >
                         Purchase premium
                       </Button>
@@ -686,37 +832,38 @@ export default function ProfilePage() {
                 <CardTitle>Balance & Invoices</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {invoicesLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16 gap-3">
-                    <Loader2 className="h-10 w-10 animate-spin text-zinc-400" />
-                    <p className="text-sm text-zinc-500">Loading balance & invoices...</p>
-                  </div>
-                ) : (
-                  <>
                     <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
                       <div className="flex items-center justify-between gap-4">
                         <div>
                           <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
                             Account balance
                           </p>
-                          <p
-                            className={`mt-1 text-2xl font-semibold ${
-                              (balance ?? 0) <= 0 ? "text-zinc-100" : "text-red-400"
-                            }`}
-                          >
-                            {(balance ?? 0) === 0
-                              ? "$0.00"
-                              : (balance ?? 0) < 0
-                                ? `+$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`
-                                : `-$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`}{" "}
-                            USD
-                          </p>
+                          {invoicesLoading ? (
+                            <p className="mt-1 text-2xl font-semibold text-zinc-500 animate-pulse">
+                              Loading...
+                            </p>
+                          ) : (
+                            <p
+                              className={`mt-1 text-2xl font-semibold ${
+                                (balance ?? 0) <= 0 ? "text-zinc-100" : "text-red-400"
+                              }`}
+                            >
+                              {(balance ?? 0) === 0
+                                ? "$0.00"
+                                : (balance ?? 0) < 0
+                                  ? `+$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`
+                                  : `-$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`}{" "}
+                              USD
+                            </p>
+                          )}
                           <p className="mt-0.5 text-xs text-zinc-500">
-                            {(balance ?? 0) < 0
-                              ? "Credit applied to future invoices"
-                              : (balance ?? 0) > 0
-                                ? "Balance owed"
-                                : "No balance"}
+                            {invoicesLoading
+                              ? "\u00A0"
+                              : (balance ?? 0) < 0
+                                ? "Credit applied to future invoices"
+                                : (balance ?? 0) > 0
+                                  ? "Balance owed"
+                                  : "No balance"}
                           </p>
                         </div>
                         <div className="flex shrink-0 gap-2">
@@ -732,12 +879,12 @@ export default function ProfilePage() {
                             )}
                           </Button>
                           <Button
-                            onClick={() => setChargeDialogOpen(true)}
-                            disabled={addBalanceLoading}
+                            onClick={() => showChargeModal()}
+                            disabled={addBalanceLoading || invoicesLoading}
                           >
                             {addBalanceLoading ? "Opening..." : "Charge"}
                           </Button>
-                          {(balance ?? 0) > 0 && (
+                          {!invoicesLoading && (balance ?? 0) > 0 && (
                             <Button
                               variant="outline"
                               onClick={handlePayBalance}
@@ -751,7 +898,18 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <p className="mb-2 text-sm font-medium text-zinc-400">Invoices</p>
-                      {invoices.length === 0 ? (
+                      {invoicesLoading ? (
+                        <div className="rounded-lg border border-zinc-800 overflow-hidden">
+                          <div className="grid grid-cols-[1fr_10rem_8rem] gap-4 border-b border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
+                            <span>Description</span>
+                            <span className="text-right">Date & time</span>
+                            <span className="text-right">Amount</span>
+                          </div>
+                          <div className="flex items-center justify-center py-8">
+                            <p className="text-sm text-zinc-500 animate-pulse">Loading...</p>
+                          </div>
+                        </div>
+                      ) : invoices.length === 0 ? (
                         <p className="text-sm text-zinc-500">No charges yet.</p>
                       ) : (
                         <div className="rounded-lg border border-zinc-800 overflow-hidden">
@@ -784,8 +942,6 @@ export default function ProfilePage() {
                         </div>
                       )}
                     </div>
-                  </>
-                )}
               </CardContent>
             </Card>
               </motion.div>
@@ -793,110 +949,6 @@ export default function ProfilePage() {
           </AnimatePresence>
         </div>
       </motion.div>
-
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete account</DialogTitle>
-            <DialogDescription>
-              This will permanently delete your account and all data. This cannot be undone.
-              Type &quot;DELETE&quot; below to confirm.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder='Type "DELETE" to confirm'
-              value={deleteConfirm}
-              onChange={(e) => setDeleteConfirm(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
-            />
-            <div className="flex justify-end gap-2">
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button
-                variant="outline"
-                className="border-red-500/50 text-red-400 hover:bg-red-500/10"
-                disabled={deleteConfirm !== "DELETE" || deleteLoading}
-                onClick={handleDeleteAccount}
-              >
-                {deleteLoading ? "Deleting..." : "Delete account"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Balance change</DialogTitle>
-            <DialogDescription>
-              Purchasing Premium will charge $19.99/month. Your current balance is{" "}
-              <span className="font-medium text-zinc-100">
-                {(balance ?? 0) === 0
-                  ? "$0.00"
-                  : (balance ?? 0) < 0
-                    ? `+$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`
-                    : `-$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`}{" "}
-                USD
-              </span>
-              . Any positive balance will be applied to future invoices. You will be redirected to complete payment.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button
-              disabled={subscribeLoading}
-              onClick={handlePurchasePremium}
-              className="bg-emerald-600 hover:bg-emerald-500"
-            >
-              {subscribeLoading ? "Redirecting..." : "Continue to payment"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={chargeDialogOpen} onOpenChange={setChargeDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add balance</DialogTitle>
-            <DialogDescription>
-              Add credit to your account. Minimum $10. Credit is applied to future invoices.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-zinc-400">Amount (USD)</label>
-              <SpinInput
-                value={chargeAmount}
-                onChange={setChargeAmount}
-                min={10}
-                step={1}
-                placeholder="10"
-                variant="pagination"
-                suffix="USD"
-                className="mt-1"
-              />
-              <p className="mt-1 text-xs text-zinc-500">Minimum $10</p>
-            </div>
-            <div className="flex justify-end gap-2">
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button
-                disabled={addBalanceLoading || parseFloat(chargeAmount) < 10}
-                onClick={handleAddBalance}
-              >
-                {addBalanceLoading ? "Opening..." : "Charge"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }

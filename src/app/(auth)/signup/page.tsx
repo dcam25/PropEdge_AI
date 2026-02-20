@@ -1,30 +1,109 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useModal } from "react-modal-hook";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { AnimatedModal } from "@/components/animated-modal";
 import {
   signupFormSchema,
   signupOtpSchema,
   OTP_LENGTH,
   type SignupForm,
 } from "@/lib/validations/signup";
+import { BirthdayCalendar } from "@/components/ui/birthday-calendar";
+import type { UseFormReturn } from "react-hook-form";
+
+function OtpModal({
+  hideModal,
+  form,
+  email,
+  error,
+  verifyOtpAndComplete,
+}: {
+  hideModal: () => void;
+  form: UseFormReturn<SignupForm>;
+  email: string;
+  error: string;
+  verifyOtpAndComplete: (data: Pick<SignupForm, "otp">, hideOtpModal: () => void) => Promise<void>;
+}) {
+  const [otpSeconds, setOtpSeconds] = useState(180);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    setOtpSeconds(180);
+    timerRef.current = setInterval(() => {
+      setOtpSeconds((s) => {
+        if (s <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  return (
+    <AnimatedModal
+      hideModal={hideModal}
+      title="Verify your email"
+      description={
+        <>
+          We sent a {OTP_LENGTH}-digit code to <strong className="text-zinc-100">{email}</strong>
+        </>
+      }
+      preventClose
+      className="max-w-sm"
+    >
+      <motion.form
+        onSubmit={form.handleSubmit((data) => verifyOtpAndComplete(data, hideModal))}
+        className="space-y-4"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30, delay: 0.05 }}
+      >
+        <div>
+          <label className="block text-sm font-medium text-zinc-400">Verification code</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={OTP_LENGTH}
+            placeholder={"0".repeat(OTP_LENGTH)}
+            {...form.register("otp")}
+            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-center text-lg tracking-[0.4em] text-zinc-100"
+          />
+          {form.formState.errors.otp && (
+            <p className="mt-1 text-sm text-red-400">{form.formState.errors.otp.message}</p>
+          )}
+        </div>
+        <p className={`text-center text-sm tabular-nums ${otpSeconds > 0 ? "text-zinc-400" : "text-red-400"}`}>
+          {otpSeconds > 0
+            ? `Code expires in ${Math.floor(otpSeconds / 60)}:${String(otpSeconds % 60).padStart(2, "0")}`
+            : "Code expired"}
+        </p>
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={form.formState.isSubmitting || otpSeconds === 0}
+        >
+          {form.formState.isSubmitting ? "Setting up..." : "Verify"}
+        </Button>
+      </motion.form>
+    </AnimatedModal>
+  );
+}
 
 export default function SignupPage() {
   const [error, setError] = useState("");
-  const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [otpSending, setOtpSending] = useState(false);
   const router = useRouter();
   const supabase = createClient();
@@ -68,7 +147,7 @@ export default function SignupPage() {
     }
   };
 
-  const verifyOtpAndComplete = async (data: Pick<SignupForm, "otp">) => {
+  const verifyOtpAndComplete = async (data: Pick<SignupForm, "otp">, hideOtpModal: () => void) => {
     setError("");
     const ok = await form.trigger(["password", "confirmPassword"]);
     if (!ok) return;
@@ -97,10 +176,23 @@ export default function SignupPage() {
       return;
     }
     if (authData.user) await updateProfileWithName(authData.user.id, profileData);
-    setOtpModalOpen(false);
+    hideOtpModal();
     router.push("/dashboard");
     router.refresh();
   };
+
+  const [showOtpModal, hideOtpModal] = useModal(
+    () => (
+      <OtpModal
+        hideModal={hideOtpModal}
+        form={form}
+        email={email}
+        error={error}
+        verifyOtpAndComplete={verifyOtpAndComplete}
+      />
+    ),
+    [form, email, error]
+  );
 
   const handleSignup = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -124,7 +216,7 @@ export default function SignupPage() {
       return;
     }
     setValue("otp", "");
-    setOtpModalOpen(true);
+    showOtpModal();
   };
 
   const handleSignupSkipOtp = async (e: React.MouseEvent) => {
@@ -213,10 +305,16 @@ export default function SignupPage() {
             <label className="block text-sm font-medium text-zinc-400">
               Birthday <span className="text-zinc-600">(optional)</span>
             </label>
-            <input
-              type="date"
-              {...form.register("birthday")}
-              className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100"
+            <Controller
+              control={form.control}
+              name="birthday"
+              render={({ field }) => (
+                <BirthdayCalendar
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  className="mt-1"
+                />
+              )}
             />
           </motion.div>
           <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }}>
@@ -352,56 +450,6 @@ export default function SignupPage() {
         </p>
       </motion.div>
 
-      <Dialog open={otpModalOpen} onOpenChange={setOtpModalOpen}>
-        <DialogContent
-          className="max-w-sm"
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
-          <DialogHeader>
-            <DialogTitle>Verify your email</DialogTitle>
-            <DialogDescription>
-              {otpSending ? (
-                "Sending verification code to your email..."
-              ) : (
-                <>
-                  We sent a {OTP_LENGTH}-digit code to <strong className="text-zinc-100">{email}</strong>
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <motion.form
-            onSubmit={form.handleSubmit(verifyOtpAndComplete)}
-            className="space-y-4"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30, delay: 0.05 }}
-          >
-            <div>
-              <label className="block text-sm font-medium text-zinc-400">Verification code</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={OTP_LENGTH}
-                placeholder={"0".repeat(OTP_LENGTH)}
-                {...form.register("otp")}
-                className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-center text-lg tracking-[0.4em] text-zinc-100"
-              />
-              {form.formState.errors.otp && (
-                <p className="mt-1 text-sm text-red-400">{form.formState.errors.otp.message}</p>
-              )}
-            </div>
-            {error && <p className="text-sm text-red-400">{error}</p>}
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={form.formState.isSubmitting || otpSending}
-            >
-              {form.formState.isSubmitting ? "Setting up..." : otpSending ? "Sending..." : "Verify"}
-            </Button>
-          </motion.form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

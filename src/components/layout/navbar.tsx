@@ -31,7 +31,7 @@ export function Navbar() {
           PropEdge AI
         </Link>
         <nav className="flex items-center gap-4">
-          {navLinks.map((link) => (
+          {(user ? navLinks : navLinks.filter((l) => l.href === "/dashboard")).map((link) => (
             <Link
               key={link.href}
               href={link.href}

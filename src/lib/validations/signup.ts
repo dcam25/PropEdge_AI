@@ -2,6 +2,14 @@ import { z } from "zod";
 
 export const OTP_LENGTH = 8;
 
+export const PASSWORD_REQUIREMENTS = [
+  { label: "8+ characters", check: (p: string) => p.length >= 8 },
+  { label: "1+ special character", check: (p: string) => (p.match(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/g) || []).length >= 1 },
+  { label: "2+ uppercase letters", check: (p: string) => (p.match(/[A-Z]/g) || []).length >= 2 },
+  { label: "2+ lowercase letters", check: (p: string) => (p.match(/[a-z]/g) || []).length >= 2 },
+  { label: "2+ numbers", check: (p: string) => (p.match(/\d/g) || []).length >= 2 },
+];
+
 export const passwordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters")
@@ -16,6 +24,16 @@ export const passwordSchema = z
   })
   .refine((p) => (p.match(/\d/g) || []).length >= 2, {
     message: "Password must contain at least 2 numbers",
+  });
+
+export const passwordChangeSchema = z
+  .object({
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
   });
 
 export const signupFormSchema = z

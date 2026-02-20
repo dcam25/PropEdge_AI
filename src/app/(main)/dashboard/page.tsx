@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useModal } from "react-modal-hook";
 import { MOCK_PROPS } from "@/data/mock-props";
 import type { Prop, SportId } from "@/types";
 import { PropTable } from "@/components/prop-table";
@@ -94,6 +95,23 @@ export default function DashboardPage() {
     return data.insight;
   };
 
+  const [showPropDetailModal, hidePropDetailModal] = useModal(() => {
+    const prop = detailPropRef.current;
+    if (!prop) return null;
+    return (
+      <PropDetailModal
+        prop={prop}
+        hideModal={hidePropDetailModal}
+        onGetAIInsight={handleGetAIInsight}
+      />
+    );
+  }, []);
+
+  const handleViewDetail = (p: Prop) => {
+    detailPropRef.current = p;
+    showPropDetailModal();
+  };
+
   return (
     <>
       <main className="mx-auto max-w-7xl px-4 py-6">
@@ -177,13 +195,6 @@ export default function DashboardPage() {
           </aside>
         </div>
       </main>
-
-      <PropDetailModal
-        prop={detailProp}
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        onGetAIInsight={handleGetAIInsight}
-      />
     </>
   );
 }

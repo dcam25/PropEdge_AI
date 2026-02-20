@@ -3,20 +3,17 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { useModal } from "react-modal-hook";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatedModal } from "@/components/animated-modal";
+import { DialogClose } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
 import type { UserModel, ModelFactor } from "@/types";
 import { runBacktest } from "@/lib/model-scoring";
 import { MOCK_PROPS } from "@/data/mock-props";
 import { Pencil, Trash2 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 const DEFAULT_FACTORS: ModelFactor[] = [
   { id: "recent_form", name: "Recent Form", weight: 25 },
@@ -147,37 +144,107 @@ export default function ModelsPage() {
     }
   };
 
+  const [showEditModal, hideEditModal] = useModal(
+    () => (
+      <AnimatedModal
+        hideModal={() => {
+          setEditingId(null);
+          hideEditModal();
+        }}
+        title="Edit Model"
+        className="max-w-md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-zinc-400">Name</label>
+            <input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2"
+              placeholder="e.g. Balanced"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-zinc-400">Description</label>
+            <input
+              value={editDesc}
+              onChange={(e) => setEditDesc(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2"
+              placeholder="Optional"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-zinc-400">Factor Weights (0–100%)</label>
+            <div className="mt-2 space-y-2">
+              {editFactors.map((f) => (
+                <div key={f.id} className="flex items-center gap-4">
+                  <span className="w-36 text-sm">{f.name}</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={f.weight}
+                    onChange={(e) =>
+                      setEditFactors((prev) =>
+                        prev.map((p) =>
+                          p.id === f.id ? { ...p, weight: parseInt(e.target.value) } : p
+                        )
+                      )
+                    }
+                    className="flex-1"
+                  />
+                  <span className="w-10 text-sm">{f.weight}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button
+              onClick={async () => {
+                if (!user || !editingId) return;
+                try {
+                  await supabase
+                    .from("user_models")
+                    .update({
+                      name: editName.trim(),
+                      description: editDesc.trim() || null,
+                      factors: editFactors,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq("id", editingId)
+                    .eq("user_id", user.id);
+                  setModels((prev) =>
+                    prev.map((m) =>
+                      m.id === editingId
+                        ? { ...m, name: editName.trim(), description: editDesc.trim() || null, factors: editFactors }
+                        : m
+                    )
+                  );
+                  setEditingId(null);
+                  hideEditModal();
+                } catch {
+                  alert("Failed to update model");
+                }
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </AnimatedModal>
+    ),
+    [editingId, editName, editDesc, editFactors, user]
+  );
+
   const handleEdit = (model: UserModel) => {
     setEditingId(model.id);
     setEditName(model.name);
     setEditDesc(model.description ?? "");
     setEditFactors(model.factors.length > 0 ? model.factors : DEFAULT_FACTORS);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!user || !editingId) return;
-    try {
-      await supabase
-        .from("user_models")
-        .update({
-          name: editName.trim(),
-          description: editDesc.trim() || null,
-          factors: editFactors,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", editingId)
-        .eq("user_id", user.id);
-      setModels((prev) =>
-        prev.map((m) =>
-          m.id === editingId
-            ? { ...m, name: editName.trim(), description: editDesc.trim() || null, factors: editFactors }
-            : m
-        )
-      );
-      setEditingId(null);
-    } catch {
-      alert("Failed to update model");
-    }
+    showEditModal();
   };
 
   const handleDelete = async (model: UserModel) => {
@@ -436,64 +503,6 @@ export default function ModelsPage() {
         </AnimatePresence>
       </motion.div>
 
-      <Dialog open={!!editingId} onOpenChange={(open) => !open && setEditingId(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Model</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-zinc-400">Name</label>
-              <input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2"
-                placeholder="e.g. Balanced"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-zinc-400">Description</label>
-              <input
-                value={editDesc}
-                onChange={(e) => setEditDesc(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2"
-                placeholder="Optional"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-zinc-400">Factor Weights (0–100%)</label>
-              <div className="mt-2 space-y-2">
-                {editFactors.map((f) => (
-                  <div key={f.id} className="flex items-center gap-4">
-                    <span className="w-36 text-sm">{f.name}</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={f.weight}
-                      onChange={(e) =>
-                        setEditFactors((prev) =>
-                          prev.map((p) =>
-                            p.id === f.id ? { ...p, weight: parseInt(e.target.value) } : p
-                          )
-                        )
-                      }
-                      className="flex-1"
-                    />
-                    <span className="w-10 text-sm">{f.weight}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditingId(null)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveEdit}>Save</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }

@@ -94,8 +94,7 @@ export async function GET() {
       }
 
       const balanceTxnsRes = await stripe.customers.listBalanceTransactions(customerId, { limit: 24 });
-      const existingTxns = balanceTxnsRes.data ?? [];
-      for (const txn of existingTxns) {
+      for (const txn of balanceTxnsRes.data ?? []) {
         if (txn.amount < 0) {
           const amountCents = Math.abs(txn.amount);
           const { error } = await supabase.from("invoices").upsert(
@@ -111,49 +110,6 @@ export async function GET() {
             { onConflict: "stripe_invoice_id" }
           );
           if (error) console.error("Balance invoice upsert error:", error);
-        }
-      }
-
-      const sessionsRes = await stripe.checkout.sessions.list({
-        customer: customerId,
-        status: "complete",
-        limit: 24,
-      });
-      for (const session of sessionsRes.data) {
-        if (session.metadata?.type !== "balance_credit" || !session.customer) continue;
-        const amountCents = parseInt(session.metadata?.amount_cents ?? "0", 10) || (session.amount_total ?? 0);
-        if (amountCents <= 0) continue;
-        const sessionTime = session.created ? session.created * 1000 : 0;
-        const alreadyCredited = existingTxns.some(
-          (t) => t.amount === -amountCents && t.created && Math.abs(t.created * 1000 - sessionTime) < 300000
-        );
-        const { data: existing } = await supabase
-          .from("invoices")
-          .select("stripe_invoice_id")
-          .eq("stripe_invoice_id", `balance_cs_${session.id}`)
-          .single();
-        if (alreadyCredited || existing) continue;
-        try {
-          const txn = await stripe.customers.createBalanceTransaction(customerId, {
-            amount: -amountCents,
-            currency: "usd",
-            description: "Account credit",
-          });
-          const { error: insErr } = await supabase.from("invoices").upsert(
-            {
-              stripe_invoice_id: `balance_${txn.id}`,
-              user_id: user.id,
-              amount_cents: amountCents,
-              currency: "usd",
-              status: "paid",
-              description: "Account credit",
-              invoice_date: session.created ? new Date(session.created * 1000).toISOString() : new Date().toISOString(),
-            },
-            { onConflict: "stripe_invoice_id" }
-          );
-          if (insErr) console.error("Recovery invoice upsert error:", insErr);
-        } catch (e) {
-          console.error("Recovery createBalanceTransaction error:", e);
         }
       }
       const { data: refetched } = await supabase
