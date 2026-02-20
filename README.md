@@ -6,7 +6,11 @@ Sports props analytics web app: research player props, build custom models, and 
 
 ### Full app walkthrough
 
-📹 [**Watch Full App Walkthrough**](https://github.com/dcam25/PropEdge_AI/blob/main/public/Full.mp4?raw=true) — click to view or download
+[![Full app walkthrough](public/Full.gif)](https://github.com/dcam25/PropEdge_AI/blob/main/public/Full.mp4?raw=true)
+
+*Click the preview to watch the full video (MP4)*
+
+> **Creating the GIF:** GitHub only shows inline video as GIFs. Generate `Full.gif` from `Full.mp4` with: `ffmpeg -i public/Full.mp4 -vf "fps=10,scale=640:-1" -t 15 public/Full.gif`
 
 ---
 
