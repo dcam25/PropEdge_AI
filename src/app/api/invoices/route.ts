@@ -95,7 +95,10 @@ export async function GET(req: Request) {
         const creditedSessionIds = new Set(
           balanceTxns.flatMap((t) => (t.metadata?.checkout_session_id ? [t.metadata.checkout_session_id] : []))
         );
+        const nowSec = Math.floor(Date.now() / 1000);
         for (const sess of balanceCreditSessions) {
+          // Skip sessions created in the last 90 seconds — webhook may not have run yet.
+          if (sess.created && nowSec - sess.created < 90) continue;
           if (sess.id && !creditedSessionIds.has(sess.id)) {
             const amountCents = parseInt(sess.metadata?.amount_cents ?? "0", 10) || (sess.amount_total ?? 0);
             if (amountCents > 0) {
@@ -344,14 +347,18 @@ export async function GET(req: Request) {
         sub.current_period_end != null &&
         sub.current_period_end > now &&
         (sub.items?.data?.[0]?.price?.unit_amount ?? 0) >= 1999;
-      await supabase
-        .from("profiles")
-        .update({
-          is_premium: !!hasActivePremium,
-          subscription_amount_cents: hasActivePremium ? sub!.items?.data?.[0]?.price?.unit_amount ?? null : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
+      // Only update is_premium when we have subscription info. Don't overwrite to false when
+      // there's no subscription — user may have purchased Premium via balance (no subscription).
+      if (sub !== undefined) {
+        await supabase
+          .from("profiles")
+          .update({
+            is_premium: !!hasActivePremium,
+            subscription_amount_cents: hasActivePremium ? sub!.items?.data?.[0]?.price?.unit_amount ?? null : null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user.id);
+      }
     } catch {
       // ignore
     }

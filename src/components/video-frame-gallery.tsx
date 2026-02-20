@@ -250,17 +250,6 @@ export function VideoFrameGallery({
               <X className="h-5 w-5" />
             </button>
 
-            {!isSingle && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-zinc-800/80 p-3 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100"
-                aria-label="Previous"
-              >
-                <ChevronLeft className="h-8 w-8" />
-              </button>
-            )}
-
             <AnimatePresence mode="wait" custom={lightboxDirection}>
               <motion.img
                 key={lightboxIndex}
@@ -277,15 +266,6 @@ export function VideoFrameGallery({
                 transition={{ duration: 0.2, ease: "easeOut" }}
               />
             </AnimatePresence>
-
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-zinc-800/80 p-3 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100"
-              aria-label="Next"
-            >
-              <ChevronRight className="h-8 w-8" />
-            </button>
 
             <div className="absolute bottom-4 left-1/2 flex max-w-md -translate-x-1/2 flex-col items-center gap-1 rounded-lg bg-zinc-800/80 px-4 py-3 text-center">
               <span className="text-sm text-zinc-400">

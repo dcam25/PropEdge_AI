@@ -146,125 +146,70 @@ npm run dev`}
             <CardContent className="space-y-8 px-8 pb-8 pt-0 text-sm text-zinc-400">
               <div className="space-y-6">
                 <h3 className="text-base font-semibold text-zinc-200">Supabase</h3>
-                <div id="supabase-project-overview" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">Project overview</h4>
-                  <p className="mt-1 text-zinc-500">
-                    PropEdge AI uses Supabase for auth and PostgreSQL. See the video showcase below for a walkthrough.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[6]} descriptions={["Project overview"]} />
-                  </div>
-                </div>
-                <div id="supabase-auth-setup" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">Authentication setup</h4>
-                  <p className="mt-1 text-zinc-500">
-                    Email/password signup and login. Supports email URL verification and OTP verification for confirmation.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[24]} descriptions={["Authentication setup"]} />
-                  </div>
-                </div>
-                <div id="supabase-database-tables" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">Database tables</h4>
-                  <p className="mt-1 text-zinc-500">
-                    PostgreSQL tables: <code className="rounded bg-zinc-800 px-1">profiles</code>,{" "}
-                    <code className="rounded bg-zinc-800 px-1">user_models</code>,{" "}
-                    <code className="rounded bg-zinc-800 px-1">stripe_customers</code>,{" "}
-                    <code className="rounded bg-zinc-800 px-1">invoices</code>. See{" "}
-                    <code className="rounded bg-zinc-800 px-1">docs/README.md</code> for schema.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[28]} descriptions={["Database tables"]} />
-                  </div>
-                </div>
-                <div id="supabase-table-editor" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">Table editor</h4>
-                  <p className="mt-1 text-zinc-500">
-                    Manage tables in Supabase Dashboard → Table Editor. Create and edit columns, indexes, and constraints.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[34]} descriptions={["Table editor"]} />
-                  </div>
-                </div>
-                <div id="supabase-rls" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">RLS policies</h4>
-                  <p className="mt-1 text-zinc-500">
-                    Row Level Security enforces per-user data access on all tables.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[37]} descriptions={["RLS policies"]} />
-                  </div>
-                </div>
-                <div id="supabase-api-edge" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">API & Edge functions</h4>
-                  <p className="mt-1 text-zinc-500">
-                    Supabase provides auto-generated REST API and optional Edge Functions. PropEdge uses the JS client.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[62]} descriptions={["API & Edge functions"]} />
-                  </div>
-                </div>
-                <div id="supabase-stored-procedures" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">Stored procedures</h4>
-                  <p className="mt-1 text-zinc-500">
-                    PostgreSQL functions can be called via RPC. Use for complex queries or server-side logic.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[100]} descriptions={["Stored procedures"]} />
-                  </div>
-                </div>
-                <div id="supabase-auth-users" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">Auth users</h4>
-                  <p className="mt-1 text-zinc-500">
-                    User management in Supabase Dashboard → Authentication → Users. OTP and email verification settings.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[105]} descriptions={["Auth users"]} />
-                  </div>
-                </div>
-                <div id="supabase-provider" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">Provider</h4>
-                  <p className="mt-1 text-zinc-500">
-                    Auth providers in Supabase Dashboard → Authentication → Providers. Configure email, OAuth, and sign-in methods.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[120]} descriptions={["Provider"]} />
-                  </div>
-                </div>
-                <div id="supabase-sql-editor" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">SQL editor</h4>
-                  <p className="mt-1 text-zinc-500">
-                    Run SQL in Supabase Dashboard → SQL Editor. Useful for migrations and ad-hoc queries.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[129]} descriptions={["SQL editor"]} />
-                  </div>
-                </div>
-                <div id="supabase-schema" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">Database schema</h4>
-                  <p className="mt-1 text-zinc-500">
-                    Schema visualization in Supabase. Tables, relationships, and RLS policies.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[136]} descriptions={["Database schema"]} />
-                  </div>
-                </div>
-                <div id="supabase-realtime" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">Realtime</h4>
-                  <p className="mt-1 text-zinc-500">
-                    Supabase Realtime for live subscriptions. Enable per-table in Database → Replication.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[137]} descriptions={["Realtime"]} />
-                  </div>
-                </div>
-                <div id="supabase-project-settings" className="scroll-mt-24 pl-6">
-                  <h4 className="font-medium text-zinc-300">Project settings</h4>
-                  <p className="mt-1 text-zinc-500">
-                    API keys, URL, and config in Supabase Dashboard → Project Settings.
-                  </p>
-                  <div className="mt-3">
-                    <VideoFrameGallery src="/Supabase_project.mp4" timestamps={[151]} descriptions={["Project settings"]} />
+                <div id="supabase-overview" className="scroll-mt-24">
+                  <div className="overflow-hidden rounded-lg border border-zinc-800">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-zinc-800 bg-zinc-900/80">
+                          <th className="px-4 py-2.5 font-medium text-zinc-300">Topic</th>
+                          <th className="px-4 py-2.5 font-medium text-zinc-300">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-800">
+                        <tr id="supabase-project-overview" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">Project overview</td>
+                          <td className="px-4 py-2.5 text-zinc-500">PropEdge uses Supabase for auth and PostgreSQL. See the video showcase below.</td>
+                        </tr>
+                        <tr id="supabase-auth-setup" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">Authentication setup</td>
+                          <td className="px-4 py-2.5 text-zinc-500">Email/password signup and login. Email URL verification and OTP for confirmation.</td>
+                        </tr>
+                        <tr id="supabase-database-tables" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">Database tables</td>
+                          <td className="px-4 py-2.5 text-zinc-500"><code className="rounded bg-zinc-800 px-1">profiles</code>, <code className="rounded bg-zinc-800 px-1">user_models</code>, <code className="rounded bg-zinc-800 px-1">stripe_customers</code>, <code className="rounded bg-zinc-800 px-1">invoices</code>. See <code className="rounded bg-zinc-800 px-1">docs/README.md</code> for schema.</td>
+                        </tr>
+                        <tr id="supabase-table-editor" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">Table editor</td>
+                          <td className="px-4 py-2.5 text-zinc-500">Manage tables in Dashboard → Table Editor. Create and edit columns, indexes, constraints.</td>
+                        </tr>
+                        <tr id="supabase-rls" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">RLS policies</td>
+                          <td className="px-4 py-2.5 text-zinc-500">Row Level Security enforces per-user data access on all tables.</td>
+                        </tr>
+                        <tr id="supabase-api-edge" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">API & Edge functions</td>
+                          <td className="px-4 py-2.5 text-zinc-500">Auto-generated REST API and optional Edge Functions. PropEdge uses the JS client.</td>
+                        </tr>
+                        <tr id="supabase-stored-procedures" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">Stored procedures</td>
+                          <td className="px-4 py-2.5 text-zinc-500">PostgreSQL functions via RPC. Use for complex queries or server-side logic.</td>
+                        </tr>
+                        <tr id="supabase-auth-users" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">Auth users</td>
+                          <td className="px-4 py-2.5 text-zinc-500">User management in Dashboard → Authentication → Users. OTP and email verification.</td>
+                        </tr>
+                        <tr id="supabase-provider" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">Provider</td>
+                          <td className="px-4 py-2.5 text-zinc-500">Auth providers in Dashboard → Authentication → Providers. Configure email, OAuth, sign-in methods.</td>
+                        </tr>
+                        <tr id="supabase-sql-editor" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">SQL editor</td>
+                          <td className="px-4 py-2.5 text-zinc-500">Run SQL in Dashboard → SQL Editor. Migrations and ad-hoc queries.</td>
+                        </tr>
+                        <tr id="supabase-schema" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">Database schema</td>
+                          <td className="px-4 py-2.5 text-zinc-500">Schema visualization. Tables, relationships, and RLS policies.</td>
+                        </tr>
+                        <tr id="supabase-realtime" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">Realtime</td>
+                          <td className="px-4 py-2.5 text-zinc-500">Live subscriptions. Enable per-table in Database → Replication.</td>
+                        </tr>
+                        <tr id="supabase-project-settings" className="scroll-mt-24">
+                          <td className="px-4 py-2.5 font-medium text-zinc-300">Project settings</td>
+                          <td className="px-4 py-2.5 text-zinc-500">API keys, URL, and config in Dashboard → Project Settings.</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
                 <div id="supabase-showcase" className="scroll-mt-24 pl-6">

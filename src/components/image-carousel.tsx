@@ -167,17 +167,6 @@ export function ImageCarousel({ images }: { images: CarouselImage[] }) {
               <X className="h-5 w-5" />
             </button>
 
-            {!isSingle && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-zinc-800/80 p-3 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100"
-                aria-label="Previous image"
-              >
-                <ChevronLeft className="h-8 w-8" />
-              </button>
-            )}
-
             <AnimatePresence mode="wait" custom={lightboxDirection}>
               <motion.img
                 key={lightboxIndex}
@@ -194,17 +183,6 @@ export function ImageCarousel({ images }: { images: CarouselImage[] }) {
                 transition={{ duration: 0.2, ease: "easeOut" }}
               />
             </AnimatePresence>
-
-            {!isSingle && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-zinc-800/80 p-3 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100"
-                aria-label="Next image"
-              >
-                <ChevronRight className="h-8 w-8" />
-              </button>
-            )}
 
             {!isSingle && (
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-zinc-800/80 px-4 py-2 text-sm text-zinc-400">
