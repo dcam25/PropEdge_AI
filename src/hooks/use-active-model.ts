@@ -16,29 +16,32 @@ export function useActiveModel(userId: string | undefined) {
       return;
     }
     setLoading(true);
-    supabase
-      .from("user_models")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("is_active", true)
-      .maybeSingle()
-      .then(({ data }) => {
+    void (async () => {
+      try {
+        const { data } = await supabase
+          .from("user_models")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("is_active", true)
+          .maybeSingle();
         if (data) {
           setActiveModel({
             id: data.id,
             userId: data.user_id,
             name: data.name,
-            description: data.description,
-            factors: data.factors as ModelFactor[],
-            performanceScore: data.performance_score,
-            isActive: data.is_active,
-            createdAt: data.created_at,
+            description: data.description ?? "",
+            factors: (data.factors ?? []) as ModelFactor[],
+            performanceScore: data.performance_score ?? undefined,
+            isActive: data.is_active ?? false,
+            createdAt: data.created_at ?? "",
           });
         } else {
           setActiveModel(null);
         }
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [userId]);
 
   return { activeModel, loading };
