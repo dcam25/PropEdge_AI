@@ -30,8 +30,15 @@ export default function LoginPage() {
     if (searchParams.get("error") === "auth_callback") {
       setError("Email confirmation failed. The link may have expired. Try signing up again.");
     }
+    if (searchParams.get("error") === "reset_expired") {
+      setError("Password reset link expired. Please request a new one.");
+    }
     if (searchParams.get("message") === "confirm_email") {
       setSuccess("Check your email to confirm your account, then sign in.");
+      setError("");
+    }
+    if (searchParams.get("message") === "password_reset") {
+      setSuccess("Password updated. You can now sign in.");
       setError("");
     }
   }, [searchParams]);
@@ -48,6 +55,8 @@ export default function LoginPage() {
     defaultValues: { otp: "" },
   });
 
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
+
   async function onPasswordSubmit(data: { email: string; password: string }) {
     setError("");
     setSuccess("");
@@ -59,7 +68,7 @@ export default function LoginPage() {
       setError(error.message);
       return;
     }
-    router.push("/dashboard");
+    router.push(redirectTo);
     router.refresh();
   }
 
@@ -93,7 +102,7 @@ export default function LoginPage() {
       setError(error.message);
       return;
     }
-    router.push("/dashboard");
+    router.push(redirectTo);
     router.refresh();
   }
 
@@ -140,7 +149,15 @@ export default function LoginPage() {
                 )}
               </motion.div>
               <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }}>
-                <label className="block text-sm font-medium text-zinc-400">Password</label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-zinc-400">Password</label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-zinc-500 hover:text-emerald-400 hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <input
                   type="password"
                   {...passwordForm.register("password", { required: "Password is required" })}

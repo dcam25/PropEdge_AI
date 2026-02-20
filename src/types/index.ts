@@ -57,6 +57,16 @@ export interface BacktestResult {
   byDate: { date: string; hit: boolean; count: number }[];
 }
 
+export interface InvoiceItem {
+  id: string;
+  date: string;
+  dateTime?: string;
+  amount: number;
+  currency: string;
+  status: string;
+  description: string;
+}
+
 export interface UserProfile {
   first_name?: string | null;
   last_name?: string | null;

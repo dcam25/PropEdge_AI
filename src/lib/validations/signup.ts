@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const OTP_LENGTH = 8;
 
-const passwordSchema = z
+export const passwordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters")
   .refine((p) => (p.match(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/g) || []).length >= 1, {

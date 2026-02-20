@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { HomeHeaderNav } from "@/components/home-header-nav";
 
 export default function HomePage() {
   return (
@@ -7,14 +8,7 @@ export default function HomePage() {
       <header className="border-b border-zinc-800">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
           <span className="font-bold text-emerald-400">PropEdge AI</span>
-          <nav className="flex items-center gap-4">
-            <Link href="/login" className="text-sm text-zinc-400 hover:text-zinc-100">
-              Sign in
-            </Link>
-            <Link href="/signup">
-              <Button size="sm">Get Started</Button>
-            </Link>
-          </nav>
+          <HomeHeaderNav />
         </div>
       </header>
 
@@ -30,7 +24,7 @@ export default function HomePage() {
           <Link href="/dashboard">
             <Button size="lg">View Props</Button>
           </Link>
-          <Link href="/pricing">
+          <Link href="/plan">
             <Button size="lg" variant="outline">
               Pricing
             </Button>
@@ -38,10 +32,15 @@ export default function HomePage() {
         </div>
       </main>
 
-      <footer className="border-t border-zinc-800 py-6 text-center text-xs text-zinc-500">
+      <footer className="mt-auto border-t border-zinc-800 py-6 text-center text-xs text-zinc-500">
         <p>
-          <Link href="/terms" className="underline">Terms</Link> ·{" "}
-          <Link href="/privacy" className="underline">Privacy</Link>
+          <Link href="/about" className="underline hover:text-zinc-300">About</Link>
+          {" · "}
+          <Link href="/about#readme" className="underline hover:text-zinc-300">README</Link>
+          {" · "}
+          <Link href="/terms" className="underline hover:text-zinc-300">Terms</Link>
+          {" · "}
+          <Link href="/privacy" className="underline hover:text-zinc-300">Privacy</Link>
         </p>
       </footer>
     </div>

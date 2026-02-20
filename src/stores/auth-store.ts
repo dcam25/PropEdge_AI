@@ -9,6 +9,7 @@ export interface Profile {
   last_name?: string | null;
   birthday?: string | null;
   is_premium: boolean;
+  subscription_amount_cents?: number | null;
   ai_insights_used_today: number;
   ai_insights_date: string | null;
 }
@@ -29,7 +30,7 @@ interface AuthState {
   canUseAIInsight: () => boolean;
 }
 
-const FREE_AI_LIMIT = 5;
+export const FREE_AI_LIMIT = 5;
 export const FREE_MODEL_LIMIT = 1;
 export const PREMIUM_MODEL_LIMIT = 10;
 
@@ -49,7 +50,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { data } = await supabase
         .from("profiles")
-        .select("first_name, last_name, birthday, is_premium, ai_insights_used_today, ai_insights_date")
+        .select("first_name, last_name, birthday, is_premium, subscription_amount_cents, ai_insights_used_today, ai_insights_date")
         .eq("id", userId)
         .maybeSingle();
       set({ profile: data ?? null });
@@ -112,7 +113,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (profile?.is_premium) return true;
     const today = new Date().toISOString().split("T")[0];
     if (profile?.ai_insights_date !== today) return true;
-    return (profile?.ai_insights_used_today ?? 0) < 5;
+    return (profile?.ai_insights_used_today ?? 0) < FREE_AI_LIMIT;
   },
 
   incrementAIInsight: async () => {

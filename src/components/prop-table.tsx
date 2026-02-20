@@ -10,9 +10,10 @@ interface PropTableProps {
   props: Prop[];
   onAddToSlip: (prop: Prop) => void;
   onViewDetail: (prop: Prop) => void;
+  addedIds?: Set<string>;
 }
 
-export function PropTable({ props, onAddToSlip, onViewDetail }: PropTableProps) {
+export function PropTable({ props, onAddToSlip, onViewDetail, addedIds = new Set() }: PropTableProps) {
   if (props.length === 0) {
     return (
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-12 text-center text-zinc-500">
@@ -34,7 +35,7 @@ export function PropTable({ props, onAddToSlip, onViewDetail }: PropTableProps) 
             <th className="px-4 py-3 text-left font-medium text-zinc-400">Hit Rate</th>
             <th className="px-4 py-3 text-left font-medium text-zinc-400">Streak</th>
             <th className="px-4 py-3 text-left font-medium text-zinc-400">Edge %</th>
-            <th className="px-4 py-3 text-left font-medium text-zinc-400">Actions</th>
+            <th className="px-4 py-3 text-center font-medium text-zinc-400">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -69,13 +70,18 @@ export function PropTable({ props, onAddToSlip, onViewDetail }: PropTableProps) 
                   </span>
                 </span>
               </td>
-              <td className="px-4 py-3">
-                <div className="flex gap-2">
+              <td className="px-4 py-3 text-center">
+                <div className="flex justify-center gap-2">
                   <Button size="sm" variant="outline" onClick={() => onViewDetail(prop)}>
                     Detail
                   </Button>
-                  <Button size="sm" onClick={() => onAddToSlip(prop)}>
-                    Add
+                  <Button
+                    size="sm"
+                    variant={addedIds.has(prop.id) ? "secondary" : "default"}
+                    onClick={() => onAddToSlip(prop)}
+                    disabled={addedIds.has(prop.id)}
+                  >
+                    {addedIds.has(prop.id) ? "Added" : "Add"}
                   </Button>
                 </div>
               </td>

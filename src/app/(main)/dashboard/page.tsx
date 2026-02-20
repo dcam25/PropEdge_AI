@@ -11,6 +11,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { SpinInput } from "@/components/ui/spin-input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
+import { FREE_AI_LIMIT } from "@/stores/auth-store";
 import { useActiveModel } from "@/hooks/use-active-model";
 import { computeModelEdge } from "@/lib/model-scoring";
 
@@ -35,7 +36,7 @@ export default function DashboardPage() {
   const [picks, setPicks] = useState<Prop[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { activeModel } = useActiveModel(user?.id);
 
   const filteredProps = useMemo(() => {
@@ -78,6 +79,10 @@ export default function DashboardPage() {
     setPicks((prev) => prev.filter((p) => p.id !== prop.id));
   };
 
+  const handleReorderPicks = (newPicks: Prop[]) => {
+    setPicks(newPicks);
+  };
+
   const handleGetAIInsight = async (prop: Prop): Promise<string> => {
     const res = await fetch("/api/ai-insight", {
       method: "POST",
@@ -93,7 +98,22 @@ export default function DashboardPage() {
     <>
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-zinc-100">Props Dashboard</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-100">Props Dashboard</h1>
+            {user && (
+              <p className="mt-1 text-sm text-zinc-500">
+                {profile?.is_premium ? (
+                  <span className="text-emerald-400">Premium</span>
+                ) : (
+                  <>
+                    <span className="text-zinc-400">
+                      {Math.max(0, FREE_AI_LIMIT - (profile?.ai_insights_used_today ?? 0))} AI insights left today
+                    </span>
+                  </>
+                )}
+              </p>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <SpinInput
               placeholder="Hit %"
@@ -132,6 +152,7 @@ export default function DashboardPage() {
                     <PropTable
                       props={paginatedProps}
                       onAddToSlip={handleAddToSlip}
+                      addedIds={new Set(picks.map((p) => p.id))}
                       onViewDetail={(p) => {
                         setDetailProp(p);
                         setDetailOpen(true);
@@ -151,7 +172,7 @@ export default function DashboardPage() {
           </div>
           <aside className="w-full lg:w-80 shrink-0">
             <aside className="sticky top-20">
-              <PickBuilder picks={picks} onRemove={handleRemoveFromSlip} />
+              <PickBuilder picks={picks} onRemove={handleRemoveFromSlip} onReorder={handleReorderPicks} />
             </aside>
           </aside>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Dialog,
@@ -28,7 +28,17 @@ export function PropDetailModal({
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [askMore, setAskMore] = useState("");
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const { canUseAIInsight, incrementAIInsight, user, profile, isUpdatingProfile } = useAuth();
+
+  useEffect(() => {
+    if (user && profile?.is_premium) {
+      fetch("/api/stripe/subscription")
+        .then((r) => r.json())
+        .then((d) => setSubscriptionEnd(d.subscription?.currentPeriodEnd ?? null))
+        .catch(() => {});
+    }
+  }, [user, profile?.is_premium]);
 
   const handleGetInsight = async () => {
     if (!prop || !user) return;
@@ -51,7 +61,13 @@ export function PropDetailModal({
   if (!prop) return null;
 
   const last10 = prop.lastGames;
-  const remaining = user ? (profile?.is_premium ? "∞" : `${Math.max(0, 5 - (profile?.ai_insights_used_today ?? 0))} left today`) : "Sign in to use";
+  const remaining = user
+    ? profile?.is_premium
+      ? subscriptionEnd
+        ? `∞ · Renews ${subscriptionEnd}`
+        : "∞"
+      : `${Math.max(0, 5 - (profile?.ai_insights_used_today ?? 0))} left today`
+    : "Sign in to use";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

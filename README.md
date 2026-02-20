@@ -137,6 +137,13 @@ npm run dev
 - Model builder with 7 weighted factors and backtesting
 - Auth (Supabase), Stripe subscription, free vs premium limits
 
+## About Page & Hero Image
+
+The `/about` page describes the app and focuses on **Supabase** and **Stripe** integration. To add a dashboard screenshot:
+
+1. Save your image as `public/about-hero.png`
+2. It will display on the About page; if missing, a placeholder is shown
+
 ## Docs
 
 See [docs/README.md](docs/README.md) for schema, model scoring, and API integration.

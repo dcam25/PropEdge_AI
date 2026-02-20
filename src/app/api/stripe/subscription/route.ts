@@ -1,15 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-export async function POST(req: NextRequest) {
+export async function GET() {
   if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json(
-      { error: "Stripe not configured" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
   }
 
   const supabase = await createClient();
@@ -20,14 +17,15 @@ export async function POST(req: NextRequest) {
   }
 
   let customerId: string | null = null;
-  const { data } = await supabase
+  const { data: cust } = await supabase
     .from("stripe_customers")
     .select("stripe_customer_id")
     .eq("user_id", user.id)
     .single();
 
-  customerId = data?.stripe_customer_id ?? null;
+  customerId = cust?.stripe_customer_id ?? null;
 
+  // Fallback: find Stripe customer by email
   if (!customerId && user.email) {
     try {
       const { data: customers } = await stripe.customers.list({
@@ -47,19 +45,29 @@ export async function POST(req: NextRequest) {
   }
 
   if (!customerId) {
-    return NextResponse.json(
-      { error: "No billing account found" },
-      { status: 400 }
-    );
+    return NextResponse.json({ subscription: null });
   }
 
-  const body = await req.json().catch(() => ({}));
-  const returnUrl = body.return_url ?? "/plan";
+  try {
+    const { data: subs } = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "active",
+      limit: 1,
+    });
 
-  const session = await stripe.billingPortal.sessions.create({
-    customer: customerId,
-    return_url: `${req.nextUrl.origin}${returnUrl.startsWith("/") ? returnUrl : `/${returnUrl}`}`,
-  });
+    const sub = subs[0];
+    if (!sub) return NextResponse.json({ subscription: null });
 
-  return NextResponse.json({ url: session.url });
+    return NextResponse.json({
+      subscription: {
+        currentPeriodEnd: sub.current_period_end
+          ? new Date(sub.current_period_end * 1000).toISOString().split("T")[0]
+          : null,
+        status: sub.status,
+      },
+    });
+  } catch (e) {
+    console.error("Stripe subscription error:", e);
+    return NextResponse.json({ error: "Failed to fetch subscription" }, { status: 500 });
+  }
 }
