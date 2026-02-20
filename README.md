@@ -2,6 +2,8 @@
 
 Sports props analytics web app: research player props, build custom models, and get AI-powered insights.
 
+![PropEdge AI Ad](public/ad.png)
+
 ---
 
 ## Tech Stack

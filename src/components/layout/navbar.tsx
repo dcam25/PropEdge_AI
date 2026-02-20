@@ -28,7 +28,7 @@ export function Navbar() {
       : null;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
+    <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-800/50 bg-gradient-to-b from-zinc-950/90 to-transparent backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="font-bold text-emerald-400">
           PropEdge AI

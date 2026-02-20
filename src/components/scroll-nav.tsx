@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface NavItem {
@@ -71,7 +72,19 @@ const README_NAV_GROUPS: (NavGroup | NavItem)[] = [
     ],
   },
   { id: "deploy", label: "Deploy", subtitle: "Vercel" },
-  { id: "features", label: "Features", subtitle: "App capabilities" },
+  {
+    label: "Features",
+    id: "features",
+    defaultOpen: true,
+    children: [
+      { id: "features-first-page", label: null, subtitle: "First page" },
+      { id: "features-dashboard", label: null, subtitle: "Dashboard" },
+      { id: "features-model-builder", label: null, subtitle: "Model builder" },
+      { id: "features-plan", label: null, subtitle: "Plan" },
+      { id: "features-profile", label: null, subtitle: "Profile" },
+      { id: "features-balance-charge", label: null, subtitle: "Balance & charge" },
+    ],
+  },
 ];
 
 function isNavGroup(item: NavGroup | NavItem): item is NavGroup {
@@ -158,22 +171,32 @@ export function ScrollNav({ variant = "about" }: { variant?: "about" | "readme" 
                 )}
                 <span>{item.label}</span>
               </button>
-              {isOpen && (
-                <div className="flex flex-col gap-1 pl-5">
-                  {item.children.map((child) => (
-                    <a
-                      key={child.id}
-                      href={`#${child.id}`}
-                      onClick={(e) => handleClick(e, child.id)}
-                      className={`block text-sm transition-colors hover:text-zinc-400 ${
-                        isActive(child.id) ? "text-emerald-400 font-medium" : "text-zinc-500"
-                      }`}
-                    >
-                      {child.subtitle}
-                    </a>
-                  ))}
-                </div>
-              )}
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex flex-col gap-1 pl-5 pt-1">
+                      {item.children.map((child) => (
+                        <a
+                          key={child.id}
+                          href={`#${child.id}`}
+                          onClick={(e) => handleClick(e, child.id)}
+                          className={`block text-sm transition-colors hover:text-zinc-400 ${
+                            isActive(child.id) ? "text-emerald-400 font-medium" : "text-zinc-500"
+                          }`}
+                        >
+                          {child.subtitle}
+                        </a>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           );
         }

@@ -31,12 +31,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ModalProvider>
-          <AuthInit />
-          {children}
-          <ScrollToTop />
-          <Toaster richColors position="top-right" />
-        </ModalProvider>
+        <div className="min-h-screen bg-zinc-950/55">
+          <ModalProvider>
+            <AuthInit />
+            {children}
+            <ScrollToTop />
+            <Toaster richColors position="top-right" />
+          </ModalProvider>
+        </div>
       </body>
     </html>
   );

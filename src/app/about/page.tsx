@@ -2,13 +2,14 @@ import Link from "next/link";
 import { Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollNav } from "@/components/scroll-nav";
+import { ImageCarousel } from "@/components/image-carousel";
 
 const GITHUB_URL = "https://github.com/dcam25/PropEdge_AI";
 
 export default function AboutPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-950">
-      <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-transparent">
+      <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-800/50 bg-gradient-to-b from-zinc-950/90 to-transparent backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
           <Link href="/" className="font-bold text-emerald-400">
             PropEdge AI
@@ -50,19 +51,13 @@ export default function AboutPage() {
             PickFinder + Rithmm—focused on speed to market and core features.
           </p>
 
-          <div className="mt-12 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50">
-            <video
-              src="/Supabase_project.mp4"
-              controls
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full"
-            >
-              Your browser does not support the video tag.
-            </video>
-            <p className="border-t border-zinc-800 px-4 py-2 text-xs text-zinc-500">Supabase project overview</p>
+          <div className="mt-8 overflow-hidden rounded-xl border border-zinc-800">
+            <img
+              src="/ad.png"
+              alt="PropEdge AI"
+              className="w-full object-cover"
+              loading="eager"
+            />
           </div>
 
           <section id="features" className="mt-16 scroll-mt-24 py-8">
@@ -87,6 +82,20 @@ export default function AboutPage() {
                 <p className="mt-1 text-sm text-zinc-500">
                   Auth and PostgreSQL for PropEdge AI.
                 </p>
+                <div className="mt-4 overflow-hidden rounded-xl border border-zinc-800">
+                  <video
+                    src="/Supabase_project.mp4"
+                    controls
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                  <p className="border-t border-zinc-800 px-4 py-2 text-xs text-zinc-500">Supabase project overview</p>
+                </div>
               </div>
               <div id="supabase-auth-setup" className="scroll-mt-24">
                 <h3 className="font-medium text-zinc-200">Authentication setup</h3>
@@ -128,7 +137,18 @@ export default function AboutPage() {
             <div className="mt-4 space-y-6 rounded-lg border border-zinc-800 bg-zinc-900/50 p-8">
               <div id="stripe-webhook" className="scroll-mt-24">
                 <h3 className="font-medium text-zinc-200">Webhook & Transaction</h3>
-                <div className="mt-2 space-y-3 text-sm text-zinc-500">
+                <div className="mt-3">
+                  <ImageCarousel
+                    images={[
+                      { src: "/Stripe_WebHooks.png", alt: "Stripe Webhooks", label: "Webhooks" },
+                      { src: "/Stripe_transaction.png", alt: "Stripe Transactions", label: "Transactions" },
+                      { src: "/Stripe_webhook_destination.png", alt: "Stripe Webhook Destination", label: "Webhook destination" },
+                      { src: "/Stripe_webhook_destination(2).png", alt: "Stripe Webhook Destination (2)", label: "Webhook destination (2)" },
+                      { src: "/Stripe_webhook_checkout_session_completed.png", alt: "Stripe checkout.session.completed", label: "Event deliveries" },
+                    ]}
+                  />
+                </div>
+                <div className="mt-4 space-y-3 text-sm text-zinc-500">
                   <div>
                     <p className="font-medium text-zinc-400">Webhook</p>
                     <p className="mt-1">Stripe sends events to <code className="rounded bg-zinc-800 px-1">/api/stripe/webhook</code>. Updates <code className="rounded bg-zinc-800 px-1">profiles.is_premium</code> and syncs <code className="rounded bg-zinc-800 px-1">invoice.paid</code> to Supabase.</p>
@@ -190,7 +210,12 @@ export default function AboutPage() {
             <p className="mt-2 text-zinc-400">
               PropEdge AI is designed to deploy on Vercel. Connect your GitHub repo, add environment variables (Supabase, Stripe, AI keys), and configure the Stripe webhook URL to your Vercel domain.
             </p>
-            <ul className="mt-2 space-y-1 pl-8 text-sm text-zinc-500">
+            <div className="mt-4">
+              <ImageCarousel
+                images={[{ src: "/vercel_deployment.png", alt: "Vercel deployment", label: "Vercel deployment" }]}
+              />
+            </div>
+            <ul className="mt-4 space-y-1 pl-8 text-sm text-zinc-500">
               <li>• Add <code className="rounded bg-zinc-800 px-1">/auth/callback</code> to Supabase redirect URLs</li>
               <li>• Set Stripe webhook to <code className="rounded bg-zinc-800 px-1">/api/stripe/webhook</code></li>
             </ul>

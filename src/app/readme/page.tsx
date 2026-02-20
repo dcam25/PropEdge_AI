@@ -10,8 +10,8 @@ import { ScrollNav } from "@/components/scroll-nav";
 
 export default function ReadmePage() {
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-950">
-      <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-transparent">
+      <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-800/50 bg-gradient-to-b from-zinc-950/90 to-transparent backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
           <Link href="/" className="font-bold text-emerald-400">
             PropEdge AI
@@ -245,6 +245,7 @@ npm run dev`}
                               images={[
                                 { src: "/Stripe_webhook_destination.png", alt: "Stripe Webhook Destination", label: "Webhook destination" },
                                 { src: "/Stripe_webhook_destination(2).png", alt: "Stripe Webhook Destination (2)", label: "Webhook destination (2)" },
+                                { src: "/Stripe_webhook_checkout_session_completed.png", alt: "Stripe Webhook checkout.session.completed", label: "Event deliveries (checkout.session.completed)" },
                               ]}
                             />
                           </div>
@@ -316,6 +317,11 @@ invoice.paid`}
               <CardTitle className="text-zinc-100">Vercel Deploy</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 px-8 pb-8 pt-0 text-sm text-zinc-400">
+              <div className="mb-4">
+                <ImageCarousel
+                  images={[{ src: "/vercel_deployment.png", alt: "Vercel deployment", label: "Vercel deployment" }]}
+                />
+              </div>
               <p>1. Connect GitHub repo to Vercel</p>
               <p>2. Add env vars: Supabase, Stripe, AI keys</p>
               <p>3. Set Stripe webhook to /api/stripe/webhook</p>
@@ -327,15 +333,57 @@ invoice.paid`}
             <CardHeader className="px-8">
               <CardTitle className="text-zinc-100">Features</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 px-8 pb-8 pt-0 text-sm text-zinc-400">
-              <p>• Dashboard with props table (NBA, NFL, MLB, NHL, WNBA, LoL, CS2, Valorant)</p>
-              <p>• Prop detail modal with AI insight (OpenAI/Grok/Claude)</p>
-              <p>• Pick builder with copy-for-PrizePicks/Underdog export</p>
-              <p>• Model builder with 7 weighted factors and backtesting</p>
-              <p>• Auth: email/password, OTP, forgot password</p>
-              <p>• Profile: edit name, birthday; change password; delete account</p>
-              <p>• Plan: Free (1 model, 5 AI/day) vs Premium (10 models, unlimited AI)</p>
-              <p>• Balance & transactions: add credit ($10+), purchase Premium with balance</p>
+            <CardContent className="space-y-6 px-8 pb-8 pt-0 text-sm text-zinc-400">
+              <div id="features-first-page" className="scroll-mt-24">
+                <p className="font-medium text-zinc-300">First page</p>
+                <ImageCarousel images={[{ src: "/prop-edge-first-page.png", alt: "PropEdge first page", label: "Landing" }]} />
+              </div>
+              <div id="features-dashboard" className="scroll-mt-24">
+                <p className="font-medium text-zinc-300">Dashboard</p>
+                <p className="mt-1 text-zinc-500">Props table (NBA, NFL, MLB, NHL, WNBA, LoL, CS2, Valorant); prop detail modal with AI insight; pick builder</p>
+                <ImageCarousel
+                  images={[
+                    { src: "/prop-edge-dashboard-1.png", alt: "PropEdge dashboard 1", label: "Dashboard 1" },
+                    { src: "/prop-edge-dashboard-2.png", alt: "PropEdge dashboard 2", label: "Dashboard 2" },
+                  ]}
+                />
+              </div>
+              <div id="features-model-builder" className="scroll-mt-24">
+                <p className="font-medium text-zinc-300">Model builder</p>
+                <p className="mt-1 text-zinc-500">7 weighted factors, backtesting, set active model</p>
+                <ImageCarousel
+                  images={[
+                    { src: "/prop-edge-model-1.png", alt: "PropEdge model 1", label: "Model 1" },
+                    { src: "/prop-edge-model-2.png", alt: "PropEdge model 2", label: "Model 2" },
+                  ]}
+                />
+              </div>
+              <div id="features-plan" className="scroll-mt-24">
+                <p className="font-medium text-zinc-300">Plan</p>
+                <p className="mt-1 text-zinc-500">Free (1 model, 5 AI/day) vs Premium (10 models, unlimited AI)</p>
+                <ImageCarousel images={[{ src: "/prop-edge-plan.png", alt: "PropEdge plan", label: "Plan" }]} />
+              </div>
+              <div id="features-profile" className="scroll-mt-24">
+                <p className="font-medium text-zinc-300">Profile</p>
+                <p className="mt-1 text-zinc-500">Edit name, birthday; change password; delete account</p>
+                <ImageCarousel
+                  images={[
+                    { src: "/prop-edge-profile-profile.png", alt: "PropEdge profile", label: "Profile" },
+                    { src: "/prop-edge-profile-password.png", alt: "PropEdge password", label: "Password" },
+                    { src: "/prop-edge-profile-plan.png", alt: "PropEdge profile plan", label: "Plan" },
+                  ]}
+                />
+              </div>
+              <div id="features-balance-charge" className="scroll-mt-24">
+                <p className="font-medium text-zinc-300">Balance & charge</p>
+                <p className="mt-1 text-zinc-500">Add credit ($10+ min), purchase Premium with balance</p>
+                <ImageCarousel
+                  images={[
+                    { src: "/prop-edge-charge.png", alt: "PropEdge charge", label: "Add balance" },
+                    { src: "/prop-edge-profile-balance-transaction.png", alt: "PropEdge balance & transactions", label: "Balance & transactions" },
+                  ]}
+                />
+              </div>
             </CardContent>
           </Card>
 

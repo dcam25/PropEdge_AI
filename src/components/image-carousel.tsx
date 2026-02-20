@@ -101,7 +101,7 @@ export function ImageCarousel({ images }: { images: CarouselImage[] }) {
             <img
               src={current.src}
               alt={current.alt}
-              className={`h-full w-full object-fill transition-opacity duration-200 ${currentLoaded ? "opacity-100" : "opacity-0"}`}
+              className={`h-full w-full object-contain transition-opacity duration-200 ${currentLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setLoaded((prev) => ({ ...prev, [index]: true }))}
             />
           </motion.div>
@@ -112,7 +112,7 @@ export function ImageCarousel({ images }: { images: CarouselImage[] }) {
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); prev(); }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/70 p-2 text-zinc-300 hover:bg-black/90 hover:text-white"
+              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-zinc-900/90 p-2.5 text-white shadow-lg ring-1 ring-zinc-700 hover:bg-zinc-800"
               aria-label="Previous"
             >
               <ChevronLeft className="h-6 w-6" />
@@ -120,7 +120,7 @@ export function ImageCarousel({ images }: { images: CarouselImage[] }) {
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); next(); }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/70 p-2 text-zinc-300 hover:bg-black/90 hover:text-white"
+              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-zinc-900/90 p-2.5 text-white shadow-lg ring-1 ring-zinc-700 hover:bg-zinc-800"
               aria-label="Next"
             >
               <ChevronRight className="h-6 w-6" />
@@ -166,6 +166,27 @@ export function ImageCarousel({ images }: { images: CarouselImage[] }) {
             >
               <X className="h-5 w-5" />
             </button>
+
+            {!isSingle && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
+                  className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-zinc-800/90 p-3 text-white hover:bg-zinc-700"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="h-8 w-8" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
+                  className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-zinc-800/90 p-3 text-white hover:bg-zinc-700"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="h-8 w-8" />
+                </button>
+              </>
+            )}
 
             <AnimatePresence mode="wait" custom={lightboxDirection}>
               <motion.img

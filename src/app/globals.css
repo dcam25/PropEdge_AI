@@ -9,6 +9,7 @@
   --accent: #10b981;
   --accent-hover: #059669;
   --ring: #10b981;
+  --bg-overlay: 0.2;
 }
 
 @theme inline {
@@ -18,8 +19,18 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  min-height: 100%;
+}
+
 body {
-  background: var(--background);
+  min-height: 100vh;
+  background-color: var(--background);
+  background-image: linear-gradient(rgba(9, 9, 11, var(--bg-overlay)), rgba(9, 9, 11, var(--bg-overlay))), url("/background_image.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
 }
