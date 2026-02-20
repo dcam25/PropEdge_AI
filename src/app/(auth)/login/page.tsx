@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,7 +17,7 @@ type LoginForm = {
 
 type LoginMode = "password" | "otp";
 
-export default function LoginPage() {
+function LoginContent() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [mode, setMode] = useState<LoginMode>("password");
@@ -329,5 +329,24 @@ export default function LoginPage() {
         </p>
       </motion.div>
     </div>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
+      <div className="w-full max-w-sm space-y-6 text-center">
+        <h1 className="text-2xl font-bold text-zinc-100">PropEdge AI</h1>
+        <p className="text-sm text-zinc-500">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginContent />
+    </Suspense>
   );
 }
