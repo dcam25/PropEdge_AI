@@ -6,7 +6,7 @@ Sports props analytics web app: research player props, build custom models, and 
 
 ### Full app walkthrough
 
-<video src="public/Full.mp4" controls width="640"></video>
+📹 [**Watch Full App Walkthrough**](https://github.com/dcam25/PropEdge_AI/blob/main/public/Full.mp4?raw=true) — click to view or download
 
 ---
 
