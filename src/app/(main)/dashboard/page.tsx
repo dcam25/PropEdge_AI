@@ -170,10 +170,7 @@ export default function DashboardPage() {
                       props={paginatedProps}
                       onAddToSlip={handleAddToSlip}
                       addedIds={new Set(picks.map((p) => p.id))}
-                      onViewDetail={(p) => {
-                        setDetailProp(p);
-                        setDetailOpen(true);
-                      }}
+                      onViewDetail={handleViewDetail}
                     />
                     <Pagination
                       page={page}
