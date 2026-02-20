@@ -17,10 +17,10 @@ import { BirthdayCalendar } from "@/components/ui/birthday-calendar";
 import { PASSWORD_REQUIREMENTS, passwordChangeSchema } from "@/lib/validations/signup";
 import { profileSchema, profileSaveSchema } from "@/lib/validations/profile";
 import { PREMIUM_PRICE, PREMIUM_PERIOD } from "@/lib/prices";
-import type { InvoiceItem } from "@/types";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { SpinInput } from "@/components/ui/spin-input";
+import { toast } from "sonner";
 
 type ProfileTab = "profile" | "password" | "plan" | "balance";
 
@@ -28,7 +28,7 @@ const SIDEBAR_LINKS: { id: ProfileTab; label: string }[] = [
   { id: "profile", label: "Profile" },
   { id: "password", label: "Password" },
   { id: "plan", label: "Plan" },
-  { id: "balance", label: "Balance & Invoices" },
+  { id: "balance", label: "Balance & Transactions" },
 ];
 
 function DeleteAccountModal({
@@ -51,7 +51,7 @@ function DeleteAccountModal({
         router.push("/");
         router.refresh();
       } else {
-        alert(data.error ?? "Failed to delete account");
+        toast.error(data.error ?? "Failed to delete account");
       }
     } finally {
       setDeleteLoading(false);
@@ -129,7 +129,7 @@ function PurchaseModal({
             {(balance ?? 0) === 0
               ? "$0.00"
               : (balance ?? 0) < 0
-                ? `+$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`
+                ? `$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`
                 : `-$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`}{" "}
             USD
           </span>
@@ -148,13 +148,14 @@ function PurchaseModal({
                   const data = await res.json();
                   if (res.ok && data.success) {
                     hideModal();
+                    toast.success("Upgraded to Premium");
                     await refreshProfile();
                     fetchInvoicesAndBalance();
                   } else {
-                    alert(data.error ?? "Failed to upgrade");
+                    toast.error(data.error ?? "Failed to upgrade");
                   }
                 } catch {
-                  alert("Failed to upgrade");
+                  toast.error("Failed to upgrade");
                 } finally {
                   setSubscribeLoading(false);
                 }
@@ -185,10 +186,10 @@ function PurchaseModal({
                       hideModal();
                       window.location.href = data.url;
                     } else {
-                      alert(data.error ?? "Failed to start checkout");
+                      toast.error(data.error ?? "Failed to start checkout");
                     }
                   } catch {
-                    alert("Failed to start checkout");
+                    toast.error("Failed to start checkout");
                   } finally {
                     setSubscribeLoading(false);
                   }
@@ -211,7 +212,9 @@ export default function ProfilePage() {
   const { user, profile, loading, isUpdatingProfile, updateProfile, refreshProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<ProfileTab>("profile");
   const [saved, setSaved] = useState(false);
-  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
+  const [transactions, setTransactions] = useState<
+    { id: string; date: string; dateTime: string; amount: number; currency: string; type: "credit" | "debit"; description: string }[]
+  >([]);
   const [balance, setBalance] = useState<number | null>(null);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [chargeLoading, setChargeLoading] = useState(false);
@@ -223,17 +226,15 @@ export default function ProfilePage() {
   const fetchInvoicesAndBalance = useCallback(() => {
     if (!user) return;
     setInvoicesLoading(true);
-    Promise.all([
-      fetch("/api/invoices").then((r) => r.json()),
-      fetch("/api/stripe/subscription").then((r) => r.json()),
-    ])
-      .then(([invData, subData]) => {
-        setInvoices(invData.invoices ?? []);
-        setBalance(invData.balance ?? null);
-        setSubscriptionEnd(subData.subscription?.currentPeriodEnd ?? null);
+    fetch("/api/invoices")
+      .then((r) => r.json())
+      .then((data) => {
+        setTransactions(data.transactions ?? []);
+        setBalance(data.balance ?? null);
+        setSubscriptionEnd(data.subscription?.currentPeriodEnd ?? null);
       })
       .catch(() => {
-        setInvoices([]);
+        // Keep existing transactions on fetch error
       })
       .finally(() => setInvoicesLoading(false));
   }, [user]);
@@ -248,7 +249,7 @@ export default function ProfilePage() {
       <AnimatedModal
         hideModal={hideChargeModal}
         title="Add balance"
-        description="Add credit to your account. Minimum $10. Credit is applied to future invoices."
+        description="Add credit to your account. Minimum $10. Credit is applied to future purchases."
       >
         <div className="space-y-4">
           <div>
@@ -286,10 +287,10 @@ export default function ProfilePage() {
                     hideChargeModal();
                     window.location.href = data.url;
                   } else {
-                    alert(data.error ?? "Failed to start charge");
+                    toast.error(data.error ?? "Failed to start charge");
                   }
                 } catch {
-                  alert("Failed to start charge");
+                  toast.error("Failed to start charge");
                 } finally {
                   setAddBalanceLoading(false);
                 }
@@ -337,7 +338,7 @@ export default function ProfilePage() {
   const passwordForm = useForm({
     resolver: zodResolver(passwordChangeSchema),
     defaultValues: { password: "", confirmPassword: "" },
-    mode: "onChange",
+    mode: "onSubmit",
   });
 
   const watchedPassword = passwordForm.watch("password");
@@ -398,7 +399,7 @@ export default function ProfilePage() {
     if (error) {
       emailForm.setError("email", { message: error.message });
     } else {
-      alert("Check your email to confirm the new address.");
+      toast.success("Check your email to confirm the new address.");
     }
   });
 
@@ -412,9 +413,9 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
-      else alert(data.error ?? "Failed to open payment");
+      else toast.error(data.error ?? "Failed to open payment");
     } catch {
-      alert("Failed to open payment");
+      toast.error("Failed to open payment");
     } finally {
       setChargeLoading(false);
     }
@@ -424,10 +425,11 @@ export default function ProfilePage() {
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ password: data.password });
     if (error) {
-      alert(error.message);
+      toast.error(error.message);
     } else {
       passwordForm.reset();
       setPasswordSaved(true);
+      toast.success("Password updated");
       setTimeout(() => setPasswordSaved(false), 2000);
     }
   });
@@ -472,11 +474,10 @@ export default function ProfilePage() {
               <button
                 key={link.id}
                 onClick={() => setActiveTab(link.id)}
-                className={`block w-full rounded-lg px-3 py-2 text-left text-sm ${
-                  activeTab === link.id
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-                }`}
+                className={`block w-full rounded-lg px-3 py-2 text-left text-sm ${activeTab === link.id
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                  }`}
               >
                 {link.label}
               </button>
@@ -495,97 +496,97 @@ export default function ProfilePage() {
                 transition={{ duration: 0.2, ease: "easeOut" }}
               >
                 <Card>
-              <CardHeader>
-                <CardTitle>Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm text-zinc-400">Email</label>
-                  <div className="mt-1 flex gap-2">
-                    <input
-                      type="email"
-                      {...emailForm.register("email")}
-                      className={cn(
-                        "flex-1 rounded-lg border bg-zinc-900 px-3 py-2 text-zinc-100",
-                        emailForm.formState.errors.email ? "border-red-500/50" : "border-zinc-700"
-                      )}
-                    />
-                    <Button variant="outline" size="sm" onClick={handleEmailUpdate} disabled={!emailForm.formState.isDirty}>
-                      Update
-                    </Button>
-                  </div>
-                  {emailForm.formState.errors.email && (
-                    <p className="mt-1 text-sm text-red-400">{emailForm.formState.errors.email.message}</p>
-                  )}
-                  <p className="mt-1 text-xs text-zinc-500">You may need to confirm the new email.</p>
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm text-zinc-400">First name</label>
-                    <input
-                      {...profileForm.register("firstName")}
-                      className={cn(
-                        "mt-1 w-full rounded-lg border bg-zinc-900 px-3 py-2 text-zinc-100",
-                        profileForm.formState.errors.firstName ? "border-red-500/50" : "border-zinc-700"
-                      )}
-                      placeholder="First name"
-                    />
-                    {profileForm.formState.errors.firstName && (
-                      <p className="mt-1 text-sm text-red-400">{profileForm.formState.errors.firstName.message}</p>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-sm text-zinc-400">Last name</label>
-                    <input
-                      {...profileForm.register("lastName")}
-                      className={cn(
-                        "mt-1 w-full rounded-lg border bg-zinc-900 px-3 py-2 text-zinc-100",
-                        profileForm.formState.errors.lastName ? "border-red-500/50" : "border-zinc-700"
-                      )}
-                      placeholder="Last name"
-                    />
-                    {profileForm.formState.errors.lastName && (
-                      <p className="mt-1 text-sm text-red-400">{profileForm.formState.errors.lastName.message}</p>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm text-zinc-400">Birthday</label>
-                  <div className="mt-1">
-                    <Controller
-                      control={profileForm.control}
-                      name="birthday"
-                      render={({ field }) => (
-                        <BirthdayCalendar
-                          value={field.value ?? ""}
-                          onChange={field.onChange}
+                  <CardHeader>
+                    <CardTitle>Profile</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-zinc-400">Email</label>
+                      <div className="mt-1 flex gap-2">
+                        <input
+                          type="email"
+                          {...emailForm.register("email")}
+                          className={cn(
+                            "flex-1 rounded-lg border bg-zinc-900 px-3 py-2 text-zinc-100",
+                            emailForm.formState.errors.email ? "border-red-500/50" : "border-zinc-700"
+                          )}
                         />
+                        <Button variant="outline" size="sm" onClick={handleEmailUpdate} disabled={!emailForm.formState.isDirty}>
+                          Update
+                        </Button>
+                      </div>
+                      {emailForm.formState.errors.email && (
+                        <p className="mt-1 text-sm text-red-400">{emailForm.formState.errors.email.message}</p>
                       )}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 pt-2">
-                  <Button disabled={!profileForm.formState.isDirty || isUpdatingProfile} onClick={handleSave}>
-                    {isUpdatingProfile ? "Saving..." : saved ? "Saved" : "Save changes"}
-                  </Button>
-                  {saved && <span className="text-sm text-emerald-400">Profile updated.</span>}
-                </div>
+                      <p className="mt-1 text-xs text-zinc-500">You may need to confirm the new email.</p>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm text-zinc-400">First name</label>
+                        <input
+                          {...profileForm.register("firstName")}
+                          className={cn(
+                            "mt-1 w-full rounded-lg border bg-zinc-900 px-3 py-2 text-zinc-100",
+                            profileForm.formState.errors.firstName ? "border-red-500/50" : "border-zinc-700"
+                          )}
+                          placeholder="First name"
+                        />
+                        {profileForm.formState.errors.firstName && (
+                          <p className="mt-1 text-sm text-red-400">{profileForm.formState.errors.firstName.message}</p>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm text-zinc-400">Last name</label>
+                        <input
+                          {...profileForm.register("lastName")}
+                          className={cn(
+                            "mt-1 w-full rounded-lg border bg-zinc-900 px-3 py-2 text-zinc-100",
+                            profileForm.formState.errors.lastName ? "border-red-500/50" : "border-zinc-700"
+                          )}
+                          placeholder="Last name"
+                        />
+                        {profileForm.formState.errors.lastName && (
+                          <p className="mt-1 text-sm text-red-400">{profileForm.formState.errors.lastName.message}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-zinc-400">Birthday</label>
+                      <div className="mt-1">
+                        <Controller
+                          control={profileForm.control}
+                          name="birthday"
+                          render={({ field }) => (
+                            <BirthdayCalendar
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
+                            />
+                          )}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 pt-2">
+                      <Button disabled={!profileForm.formState.isDirty || isUpdatingProfile} onClick={handleSave}>
+                        {isUpdatingProfile ? "Saving..." : saved ? "Saved" : "Save changes"}
+                      </Button>
+                      {saved && <span className="text-sm text-emerald-400">Profile updated.</span>}
+                    </div>
 
-                <div className="mt-8 rounded-lg border border-red-900/60 bg-red-950/30 p-4">
-                  <h4 className="mb-2 font-medium text-red-400/90">Danger zone</h4>
-                  <p className="mb-3 text-sm text-zinc-500">
-                    Permanently delete your account and all data. This cannot be undone.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="border-red-900/50 text-red-400/90 hover:bg-red-950/50"
-                    onClick={handleDeleteClick}
-                  >
-                    Delete account
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                    <div className="mt-8 rounded-lg border border-red-900/60 bg-red-950/30 p-4">
+                      <h4 className="mb-2 font-medium text-red-400/90">Danger zone</h4>
+                      <p className="mb-3 text-sm text-zinc-500">
+                        Permanently delete your account and all data. This cannot be undone.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="border-red-900/50 text-red-400/90 hover:bg-red-950/50"
+                        onClick={handleDeleteClick}
+                      >
+                        Delete account
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
 
@@ -598,151 +599,158 @@ export default function ProfilePage() {
                 transition={{ duration: 0.2, ease: "easeOut" }}
               >
                 <Card>
-              <CardHeader>
-                <CardTitle>Password</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm text-zinc-400">New password</label>
-                  <div className="relative mt-1">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      {...passwordForm.register("password", {
-                        onBlur: () => setPasswordFocused(false),
-                      })}
-                      onFocus={() => setPasswordFocused(true)}
-                      className={cn(
-                        "w-full rounded-lg border bg-zinc-900 px-3 py-2 pr-10 text-zinc-100",
-                        watchedPassword && passwordForm.formState.errors.password
-                          ? "border-red-500/50"
-                          : "border-zinc-700"
-                      )}
-                      placeholder="Input new password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((p) => !p)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                  <AnimatePresence>
-                    {passwordFocused && (
-                      <motion.ul
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="mt-2 space-y-1.5"
-                      >
-                        {PASSWORD_REQUIREMENTS.map((req, i) => {
-                          const met = req.check(watchedPassword || "");
-                          return (
-                            <motion.li
-                              key={req.label}
+                  <CardHeader>
+                    <CardTitle>Password</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-zinc-400">New password</label>
+                      <div className="relative mt-1 flex">
+                        <div className="relative flex-1">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                          {...passwordForm.register("password", {
+                            onBlur: () => {
+                              setPasswordFocused(false);
+                              if (passwordForm.formState.dirtyFields.password) {
+                                passwordForm.trigger(["password", "confirmPassword"]);
+                              }
+                            },
+                          })}
+                            onFocus={() => setPasswordFocused(true)}
+                            className={cn(
+                              "w-full rounded-lg border bg-zinc-900 px-3 py-2 pr-10 text-zinc-100",
+                              watchedPassword && passwordForm.formState.errors.password
+                                ? "border-red-500/50"
+                                : "border-zinc-700"
+                            )}
+                            placeholder="Input new password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword((p) => !p)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                        <AnimatePresence>
+                          {passwordFocused && (
+                            <motion.ul
                               initial={{ opacity: 0, x: -8 }}
                               animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.04 * i, duration: 0.18 }}
-                              className="flex items-center gap-2 text-xs text-zinc-500"
+                              exit={{ opacity: 0, x: -8 }}
+                              transition={{ duration: 0.2, ease: "easeOut" }}
+                              className="absolute left-full top-0 z-50 ml-3 min-w-[11rem] space-y-1.5 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 shadow-xl max-sm:left-0 max-sm:top-full max-sm:mt-2 max-sm:ml-0"
                             >
-                              <span className="relative inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
-                                <AnimatePresence mode="wait">
-                                  {met ? (
-                                    <motion.span
-                                      key="met"
-                                      initial={{ scale: 0.8, opacity: 0 }}
-                                      animate={{ scale: 1, opacity: 1 }}
-                                      exit={{ scale: 0.8, opacity: 0 }}
-                                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                      className="absolute inset-0 inline-flex items-center justify-center rounded-full border border-emerald-500 bg-emerald-500 text-white"
-                                    >
-                                      <motion.svg
-                                        initial={{ scale: 0, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        transition={{ delay: 0.05, duration: 0.12 }}
-                                        className="h-2 w-2"
-                                        viewBox="0 0 12 12"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <path d="M2 6l3 3 5-6" />
-                                      </motion.svg>
-                                    </motion.span>
-                                  ) : (
-                                    <motion.span
-                                      key="unmet"
-                                      initial={{ scale: 0.8, opacity: 0 }}
-                                      animate={{ scale: 1, opacity: 1 }}
-                                      exit={{ scale: 0.8, opacity: 0 }}
-                                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                      className="absolute inset-0 rounded-full border border-zinc-600 bg-transparent"
-                                    />
-                                  )}
-                                </AnimatePresence>
-                              </span>
-                              {req.label}
-                            </motion.li>
-                          );
-                        })}
-                      </motion.ul>
-                    )}
-                  </AnimatePresence>
-                  {watchedPassword && passwordForm.formState.errors.password && (
-                    <p className="mt-1 text-sm text-red-400">
-                      {passwordForm.formState.errors.password.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm text-zinc-400">Confirm password</label>
-                  <div className="relative mt-1">
-                    <input
-                      type={showPasswordConfirm ? "text" : "password"}
-                      {...passwordForm.register("confirmPassword")}
-                      className={cn(
-                        "w-full rounded-lg border bg-zinc-900 px-3 py-2 pr-10 text-zinc-100",
-                        watchedConfirmPassword && passwordForm.formState.errors.confirmPassword
-                          ? "border-red-500/50"
-                          : "border-zinc-700"
+                            {PASSWORD_REQUIREMENTS.map((req, i) => {
+                              const met = req.check(watchedPassword || "");
+                              return (
+                                <motion.li
+                                  key={req.label}
+                                  initial={{ opacity: 0, x: -8 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.04 * i, duration: 0.18 }}
+                                  className="flex items-center gap-2 text-xs text-zinc-500"
+                                >
+                                  <span className="relative inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                                    <AnimatePresence mode="wait">
+                                      {met ? (
+                                        <motion.span
+                                          key="met"
+                                          initial={{ scale: 0.8, opacity: 0 }}
+                                          animate={{ scale: 1, opacity: 1 }}
+                                          exit={{ scale: 0.8, opacity: 0 }}
+                                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                          className="absolute inset-0 inline-flex items-center justify-center rounded-full border border-emerald-500 bg-emerald-500 text-white"
+                                        >
+                                          <motion.svg
+                                            initial={{ scale: 0, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            transition={{ delay: 0.05, duration: 0.12 }}
+                                            className="h-2 w-2"
+                                            viewBox="0 0 12 12"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          >
+                                            <path d="M2 6l3 3 5-6" />
+                                          </motion.svg>
+                                        </motion.span>
+                                      ) : (
+                                        <motion.span
+                                          key="unmet"
+                                          initial={{ scale: 0.8, opacity: 0 }}
+                                          animate={{ scale: 1, opacity: 1 }}
+                                          exit={{ scale: 0.8, opacity: 0 }}
+                                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                          className="absolute inset-0 rounded-full border border-zinc-600 bg-transparent"
+                                        />
+                                      )}
+                                    </AnimatePresence>
+                                  </span>
+                                  {req.label}
+                                </motion.li>
+                              );
+                            })}
+                            </motion.ul>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      {watchedPassword && passwordForm.formState.errors.password && (
+                        <p className="mt-1 text-sm text-red-400">
+                          {passwordForm.formState.errors.password.message}
+                        </p>
                       )}
-                      placeholder="Confirm new password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswordConfirm((p) => !p)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-                      aria-label={showPasswordConfirm ? "Hide password" : "Show password"}
+                    </div>
+                    <div>
+                      <label className="block text-sm text-zinc-400">Confirm password</label>
+                      <div className="relative mt-1">
+                        <input
+                          type={showPasswordConfirm ? "text" : "password"}
+                          {...passwordForm.register("confirmPassword")}
+                          className={cn(
+                            "w-full rounded-lg border bg-zinc-900 px-3 py-2 pr-10 text-zinc-100",
+                            watchedConfirmPassword && passwordForm.formState.errors.confirmPassword
+                              ? "border-red-500/50"
+                              : "border-zinc-700"
+                          )}
+                          placeholder="Confirm new password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordConfirm((p) => !p)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                          aria-label={showPasswordConfirm ? "Hide password" : "Show password"}
+                        >
+                          {showPasswordConfirm ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                      {watchedConfirmPassword && passwordForm.formState.errors.confirmPassword && (
+                        <p className="mt-1 text-sm text-red-400">
+                          {passwordForm.formState.errors.confirmPassword.message}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      onClick={handlePasswordUpdate}
+                      disabled={!passwordForm.formState.isValid}
                     >
-                      {showPasswordConfirm ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                  {watchedConfirmPassword && passwordForm.formState.errors.confirmPassword && (
-                    <p className="mt-1 text-sm text-red-400">
-                      {passwordForm.formState.errors.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  onClick={handlePasswordUpdate}
-                  disabled={!passwordForm.formState.isValid}
-                >
-                  {passwordSaved ? "Saved" : "Update password"}
-                </Button>
-              </CardContent>
-            </Card>
+                      {passwordSaved ? "Saved" : "Update password"}
+                    </Button>
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
 
@@ -765,11 +773,10 @@ export default function ProfilePage() {
                     <CardTitle className="text-xl">Plan</CardTitle>
                     <div className="mt-2 flex items-center gap-3">
                       <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-                          profile?.is_premium
-                            ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                            : "bg-zinc-800 text-zinc-300 ring-1 ring-zinc-700"
-                        }`}
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${profile?.is_premium
+                          ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                          : "bg-zinc-800 text-zinc-300 ring-1 ring-zinc-700"
+                          }`}
                       >
                         {profile?.is_premium ? "Premium" : "Free"}
                       </span>
@@ -785,26 +792,39 @@ export default function ProfilePage() {
                         : "Upgrade for more models and unlimited AI insights."}
                     </p>
 
-                    {/* {profile?.is_premium && (
+                    {profile?.is_premium && (
                       <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                        {(profile.subscription_amount_cents ?? 0) > 0 && (
-                          <p className="text-sm text-zinc-400">
-                            Billed{" "}
-                            <span className="font-medium text-zinc-100">
-                              ${(profile.subscription_amount_cents! / 100).toFixed(2)}/month
-                            </span>
-                          </p>
+                        {invoicesLoading ? (
+                          <p className="text-sm text-zinc-500">Loading subscription details...</p>
+                        ) : (
+                          <>
+                            <p className="text-sm text-zinc-400">
+                              Billed{" "}
+                              <span className="font-medium text-zinc-100">
+                                {(profile.subscription_amount_cents ?? 0) > 0
+                                  ? `$${(profile.subscription_amount_cents! / 100).toFixed(2)}`
+                                  : PREMIUM_PRICE}
+                                /month
+                              </span>
+                            </p>
+                            {subscriptionEnd ? (
+                              <p className="text-sm text-zinc-400">
+                                Expires{" "}
+                                <span className="font-medium text-zinc-100">
+                                  {new Date(subscriptionEnd).toLocaleDateString(undefined, {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })}
+                                </span>
+                              </p>
+                            ) : (
+                              <p className="text-sm text-zinc-500">Subscription active</p>
+                            )}
+                          </>
                         )}
-                        {subscriptionEnd && ( 
-                          <p className="text-sm text-zinc-400">
-                            Renews on{" "}
-                            <span className="font-medium text-zinc-100">
-                              {subscriptionEnd}
-                            </span>
-                          </p>
-                        )} 
                       </div>
-                    )} */}
+                    )}
 
                     {!profile?.is_premium && (
                       <Button
@@ -828,10 +848,10 @@ export default function ProfilePage() {
                 transition={{ duration: 0.2, ease: "easeOut" }}
               >
                 <Card>
-              <CardHeader>
-                <CardTitle>Balance & Invoices</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                  <CardHeader>
+                    <CardTitle>Balance</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
                       <div className="flex items-center justify-between gap-4">
                         <div>
@@ -844,14 +864,13 @@ export default function ProfilePage() {
                             </p>
                           ) : (
                             <p
-                              className={`mt-1 text-2xl font-semibold ${
-                                (balance ?? 0) <= 0 ? "text-zinc-100" : "text-red-400"
-                              }`}
+                              className={`mt-1 text-2xl font-semibold ${(balance ?? 0) <= 0 ? "text-zinc-100" : "text-red-400"
+                                }`}
                             >
                               {(balance ?? 0) === 0
                                 ? "$0.00"
                                 : (balance ?? 0) < 0
-                                  ? `+$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`
+                                  ? `$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`
                                   : `-$${(Math.abs(balance ?? 0) / 100).toFixed(2)}`}{" "}
                               USD
                             </p>
@@ -896,54 +915,60 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     </div>
-                    <div>
-                      <p className="mb-2 text-sm font-medium text-zinc-400">Invoices</p>
-                      {invoicesLoading ? (
-                        <div className="rounded-lg border border-zinc-800 overflow-hidden">
-                          <div className="grid grid-cols-[1fr_10rem_8rem] gap-4 border-b border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                            <span>Description</span>
-                            <span className="text-right">Date & time</span>
-                            <span className="text-right">Amount</span>
-                          </div>
-                          <div className="flex items-center justify-center py-8">
-                            <p className="text-sm text-zinc-500 animate-pulse">Loading...</p>
-                          </div>
+                  </CardContent>
+                  <CardHeader>
+                    <CardTitle>Transactions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {invoicesLoading ? (
+                      <div className="rounded-lg border border-zinc-800 overflow-hidden">
+                        <div className="grid grid-cols-[1fr_10rem_8rem] gap-4 border-b border-zinc-800 bg-zinc-900/50 px-3 py-3 text-xs font-medium uppercase tracking-wider text-zinc-500 min-h-[2.25rem]">
+                          <span>Description</span>
+                          <span className="text-right">Date & time</span>
+                          <span className="text-right">Amount</span>
                         </div>
-                      ) : invoices.length === 0 ? (
-                        <p className="text-sm text-zinc-500">No charges yet.</p>
-                      ) : (
-                        <div className="rounded-lg border border-zinc-800 overflow-hidden">
-                            <div className="grid grid-cols-[1fr_10rem_8rem] gap-4 border-b border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                            <span>Description</span>
-                            <span className="text-right">Date & time</span>
-                            <span className="text-right">Amount</span>
-                          </div>
-                          <ul className="divide-y divide-zinc-800">
-                            {invoices.map((inv) => (
-                              <li
-                                key={inv.id}
-                                className="grid grid-cols-[1fr_10rem_8rem] gap-4 px-3 py-3 text-sm items-center"
+                        <div className="flex items-center justify-center py-8">
+                          <p className="text-sm text-zinc-500 animate-pulse">Loading...</p>
+                        </div>
+                      </div>
+                    ) : transactions.length === 0 ? (
+                      <p className="text-sm text-zinc-500">No transactions yet.</p>
+                    ) : (
+                      <div className="rounded-lg border border-zinc-800 overflow-hidden">
+                        <div className="grid grid-cols-[1fr_10rem_8rem] gap-4 border-b border-zinc-800 bg-zinc-900/50 px-3 py-3 text-xs font-medium uppercase tracking-wider text-zinc-500 min-h-[2.25rem]">
+                          <span>Description</span>
+                          <span className="text-right">Date & time</span>
+                          <span className="text-right">Amount</span>
+                        </div>
+                        <ul className="divide-y divide-zinc-800">
+                          {transactions.map((tx) => (
+                            <li
+                              key={tx.id}
+                              className="grid grid-cols-[1fr_10rem_8rem] gap-4 px-3 py-3 text-sm items-center"
+                            >
+                              <span className="text-zinc-100">{tx.description}</span>
+                              <span className="text-zinc-500 text-right tabular-nums">
+                                {tx.dateTime
+                                  ? new Date(tx.dateTime).toLocaleString(undefined, {
+                                    dateStyle: "short",
+                                    timeStyle: "short",
+                                  })
+                                  : tx.date}
+                              </span>
+                              <span
+                                className={`font-medium text-right tabular-nums ${
+                                  tx.type === "credit" ? "text-emerald-400" : "text-zinc-100"
+                                }`}
                               >
-                                <span className="text-zinc-100">{inv.description}</span>
-                                <span className="text-zinc-500 text-right tabular-nums">
-                                  {inv.dateTime
-                                    ? new Date(inv.dateTime).toLocaleString(undefined, {
-                                        dateStyle: "short",
-                                        timeStyle: "short",
-                                      })
-                                    : inv.date}
-                                </span>
-                                <span className="font-medium text-zinc-100 text-right tabular-nums">
-                                  ${inv.amount.toFixed(2)} {inv.currency}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-              </CardContent>
-            </Card>
+                                {tx.type === "credit" ? "+" : "-"}${tx.amount.toFixed(2)} {tx.currency}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
           </AnimatePresence>

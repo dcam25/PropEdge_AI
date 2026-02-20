@@ -25,7 +25,7 @@ export async function GET() {
 
   customerId = cust?.stripe_customer_id ?? null;
 
-  // Fallback: find Stripe customer by email
+  // Fallback: find Stripe customer by email or checkout sessions
   if (!customerId && user.email) {
     try {
       const { data: customers } = await stripe.customers.list({
@@ -41,6 +41,44 @@ export async function GET() {
       }
     } catch {
       // ignore
+    }
+  }
+
+  if (!customerId) {
+    try {
+      const { data: sessions } = await stripe.checkout.sessions.list({ limit: 100 });
+      const match = sessions.find((s) => s.metadata?.user_id === user.id && s.customer);
+      if (match) {
+        customerId = typeof match.customer === "string" ? match.customer : match.customer?.id ?? null;
+        if (customerId) {
+          await supabase.from("stripe_customers").upsert(
+            { user_id: user.id, stripe_customer_id: customerId },
+            { onConflict: "user_id" }
+          );
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // If customer was deleted in Stripe, create new and update.
+  if (customerId) {
+    try {
+      const customer = await stripe.customers.retrieve(customerId);
+      if (customer && "deleted" in customer && customer.deleted) {
+        const newCustomer = await stripe.customers.create({
+          email: user.email ?? undefined,
+          metadata: { supabase_user_id: user.id },
+        });
+        await supabase.from("stripe_customers").upsert(
+          { user_id: user.id, stripe_customer_id: newCustomer.id },
+          { onConflict: "user_id" }
+        );
+        customerId = newCustomer.id;
+      }
+    } catch {
+      customerId = null;
     }
   }
 

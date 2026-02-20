@@ -43,6 +43,7 @@ export default function ReadmePage() {
             <p><strong>Auth & Database:</strong> Supabase</p>
             <p><strong>Payments:</strong> Stripe</p>
             <p><strong>AI:</strong> OpenAI-compatible API</p>
+            <p><strong>Deploy:</strong> Vercel</p>
           </CardContent>
         </Card>
 
@@ -60,6 +61,42 @@ export default function ReadmePage() {
 
         <Card className="mt-6 border-zinc-800 bg-zinc-900/50">
           <CardHeader>
+            <CardTitle className="text-zinc-100">Packages</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-zinc-400">
+            <p><strong>Core:</strong> next, react, react-dom, typescript</p>
+            <p><strong>Forms:</strong> react-hook-form, @hookform/resolvers, zod</p>
+            <p><strong>UI:</strong> @radix-ui/*, cva, clsx, tailwind-merge, lucide-react, flowbite-react, framer-motion, sonner</p>
+            <p><strong>Supabase:</strong> @supabase/supabase-js, @supabase/ssr</p>
+            <p><strong>Stripe:</strong> stripe</p>
+            <p><strong>Other:</strong> zustand, recharts, react-modal-hook</p>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6 border-zinc-800 bg-zinc-900/50">
+          <CardHeader>
+            <CardTitle className="text-zinc-100">Supabase & Stripe</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-zinc-400">
+            <p><strong>Supabase:</strong> Auth (email/password), PostgreSQL (profiles, user_models, stripe_customers), RLS</p>
+            <p><strong>Stripe:</strong> Checkout (subscription), Customer Portal, webhooks, balance & transactions</p>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6 border-zinc-800 bg-zinc-900/50">
+          <CardHeader>
+            <CardTitle className="text-zinc-100">Vercel Deploy</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-zinc-400">
+            <p>1. Connect GitHub repo to Vercel</p>
+            <p>2. Add env vars: Supabase, Stripe, AI keys</p>
+            <p>3. Set Stripe webhook to /api/stripe/webhook</p>
+            <p>4. Add /auth/callback to Supabase redirect URLs</p>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6 border-zinc-800 bg-zinc-900/50">
+          <CardHeader>
             <CardTitle className="text-zinc-100">Features</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-zinc-400">
@@ -68,7 +105,7 @@ export default function ReadmePage() {
             <p>• Pick builder with copy-for-PrizePicks export</p>
             <p>• Model builder with 7 weighted factors and backtesting</p>
             <p>• Auth (Supabase), Stripe subscription, free vs premium limits</p>
-            <p>• Balance & Invoices with Supabase-managed invoice list</p>
+            <p>• Balance & transactions (Stripe customer balance)</p>
           </CardContent>
         </Card>
 

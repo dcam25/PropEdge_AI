@@ -17,6 +17,7 @@ import {
   type SignupForm,
 } from "@/lib/validations/signup";
 import { BirthdayCalendar } from "@/components/ui/birthday-calendar";
+import { toast } from "sonner";
 import type { UseFormReturn } from "react-hook-form";
 
 function OtpModal({
@@ -165,6 +166,7 @@ export default function SignupPage() {
     });
     if (error) {
       setError(error.message);
+      toast.error(error.message);
       return;
     }
 
@@ -173,9 +175,11 @@ export default function SignupPage() {
     const { data: authData, error: updateError } = await supabase.auth.updateUser({ password: all.password });
     if (updateError) {
       setError(updateError.message);
+      toast.error(updateError.message);
       return;
     }
     if (authData.user) await updateProfileWithName(authData.user.id, profileData);
+    toast.success("Account created successfully");
     hideOtpModal();
     router.push("/dashboard");
     router.refresh();
@@ -213,8 +217,10 @@ export default function SignupPage() {
     setOtpSending(false);
     if (error) {
       setError(error.message);
+      toast.error(error.message);
       return;
     }
+    toast.success("Verification code sent to your email");
     setValue("otp", "");
     showOtpModal();
   };
@@ -237,9 +243,11 @@ export default function SignupPage() {
     });
     if (error) {
       setError(error.message);
+      toast.error(error.message);
       return;
     }
     if (authData.session && authData.user) {
+      toast.success("Account created successfully");
       await updateProfileWithName(authData.user.id, profileData);
       router.push("/dashboard");
       router.refresh();
@@ -328,24 +336,31 @@ export default function SignupPage() {
               <p className="mt-1 text-sm text-red-400">{form.formState.errors.email.message}</p>
             )}
           </motion.div>
-          <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }}>
+          <motion.div layout transition={{ layout: { duration: 0.2, ease: "easeOut" } }} className="relative">
             <label className="block text-sm font-medium text-zinc-400">Password</label>
+            <div className="relative mt-1 flex">
             <input
               type="password"
-              {...form.register("password")}
+              {...form.register("password", {
+                onBlur: () => {
+                  setPasswordFocused(false);
+                  if (form.formState.dirtyFields.password) {
+                    form.trigger(["password", "confirmPassword"]);
+                  }
+                },
+              })}
               onFocus={() => setPasswordFocused(true)}
-              onBlur={() => setPasswordFocused(false)}
-              className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100"
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100"
             />
-            <AnimatePresence>
-              {passwordFocused && (
-                <motion.ul
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="mt-2 space-y-1.5"
-                >
+              <AnimatePresence>
+                {passwordFocused && (
+                  <motion.ul
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -8 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute left-full top-0 z-50 ml-3 min-w-[11rem] space-y-1.5 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 shadow-xl max-sm:left-0 max-sm:top-full max-sm:mt-2 max-sm:ml-0"
+                  >
                   {passwordRequirements.map((req, i) => {
                     const met = req.check(password);
                     return (
@@ -398,9 +413,10 @@ export default function SignupPage() {
                       </motion.li>
                     );
                   })}
-                </motion.ul>
-              )}
-            </AnimatePresence>
+                  </motion.ul>
+                )}
+              </AnimatePresence>
+            </div>
             {form.formState.errors.password && (
               <p className="mt-1 text-sm text-red-400">{form.formState.errors.password.message}</p>
             )}

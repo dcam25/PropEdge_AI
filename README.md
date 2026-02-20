@@ -15,42 +15,64 @@ Sports props analytics web app: research player props, build custom models, and 
 | **Auth & Database** | Supabase |
 | **Payments** | Stripe |
 | **AI** | OpenAI-compatible API (OpenAI, Grok, Claude, etc.) |
+| **Deploy** | Vercel |
 
 ---
 
-## React Modules & Libraries
+## Packages Used
 
-### Core React
-- **react** (19.2) – UI library, hooks (`useState`, `useEffect`, `useMemo`, `useContext`, `createContext`)
-- **react-dom** (19.2) – DOM rendering
+### Core
+- **next** (16.1) – App Router, API routes, server components
+- **react** (19.2), **react-dom** (19.2) – UI library
+- **typescript** (5.x) – Type safety
 
-### Forms
-- **react-hook-form** (7.x) – Form state, validation, and submission for login/signup. Reduces re-renders and provides built-in validation.
-- **zod** (4.x) – Schema validation via `@hookform/resolvers/zod`. Signup form enforces password strength: 8+ chars, 1+ special, 2+ upper, 2+ lower, 2+ numbers. Schemas live in `src/lib/validations/`.
+### Forms & Validation
+- **react-hook-form** (7.x) – Form state and submission
+- **@hookform/resolvers** (5.x) – Zod resolver for react-hook-form
+- **zod** (4.x) – Schema validation (signup, profile, password)
 
-### UI Components (Radix UI)
-- **@radix-ui/react-dialog** – Accessible modal dialogs (prop detail, AI insight)
-- **@radix-ui/react-tabs** – Sport filter tabs on dashboard
-- **@radix-ui/react-slot** – Polymorphic `asChild` prop for Button
-- **@radix-ui/react-dropdown-menu** – Dropdown menus (available)
-- **@radix-ui/react-select** – Select inputs (available)
-- **@radix-ui/react-toast** – Toast notifications (available)
+### UI (Radix UI)
+- **@radix-ui/react-dialog** – Modal dialogs
+- **@radix-ui/react-tabs** – Tabs
+- **@radix-ui/react-slot** – Polymorphic `asChild`
+- **@radix-ui/react-dropdown-menu** – Dropdown menus
+- **@radix-ui/react-select** – Select inputs
+- **@radix-ui/react-toast** – Toast notifications
 
-### Utilities
-- **class-variance-authority (cva)** – Variant-based styling for Button (default, outline, ghost, etc.)
+### UI Utilities & Styling
+- **class-variance-authority (cva)** – Variant-based component styling
 - **clsx** – Conditional class names
-- **tailwind-merge** – Merge Tailwind classes without conflicts
-- **lucide-react** – Icons (Zap, Copy, Trash2, X, etc.)
+- **tailwind-merge** – Merge Tailwind classes
+- **lucide-react** – Icons
+- **flowbite-react** – Datepicker (birthday)
+- **framer-motion** – Animations
+- **react-transition-group** – Transitions
+- **sonner** – Toast notifications
 
-### Next.js
-- **next** (16.1) – App Router, `Link`, `useRouter`, API routes, server components
-- **next/font** – Geist Sans & Geist Mono
+### Modals & Charts
+- **react-modal-hook** – Modal hooks
+- **recharts** – Charts (dashboard)
 
----
-
-## Integrated Platforms
+### State & Data
+- **zustand** – Auth store
+- **@faker-js/faker** – Mock data
+- **mocker-data-generator** – Mock data generation
 
 ### Supabase
+- **@supabase/supabase-js** – Supabase client
+- **@supabase/ssr** – Next.js server/client auth
+
+### Stripe
+- **stripe** – Payments, subscriptions, balance, webhooks
+
+### Dev
+- **patch-package** – Patch node_modules (flowbite-react)
+- **eslint**, **eslint-config-next** – Linting
+- **tailwindcss**, **@tailwindcss/postcss** – Tailwind v4
+
+---
+
+## Supabase
 - **Auth** – Email/password signup and login
 - **PostgreSQL** – `profiles`, `user_models`, `stripe_customers`
 - **Row Level Security (RLS)** – Per-user data access
@@ -128,6 +150,19 @@ npm run dev
 1. **Supabase:** Create project, run `supabase/migrations/001_initial_schema.sql` in SQL Editor.
 2. **Stripe:** Create Product + Price ($19.99/mo), add webhook for subscription events.
 3. **AI:** Set `AI_API_KEY` (OpenAI, Grok, or any OpenAI-compatible API).
+
+---
+
+## Vercel Deploy
+
+1. **Connect repo** – Push to GitHub, then import the project in [Vercel](https://vercel.com).
+2. **Environment variables** – Add all env vars from `.env` in Vercel Project Settings → Environment Variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+   - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (use Vercel’s URL for webhook)
+   - `AI_API_KEY`, `AI_API_URL`, `AI_MODEL`
+   - Optional: `ADMIN_SECRET` for admin APIs
+3. **Stripe webhook** – In Stripe Dashboard, set the webhook URL to `https://your-app.vercel.app/api/stripe/webhook`.
+4. **Supabase redirect** – In Supabase Auth → URL Configuration, add `https://your-app.vercel.app/auth/callback` as a redirect URL.
 
 ## Features
 

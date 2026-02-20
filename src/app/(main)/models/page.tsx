@@ -14,6 +14,7 @@ import type { UserModel, ModelFactor } from "@/types";
 import { runBacktest } from "@/lib/model-scoring";
 import { MOCK_PROPS } from "@/data/mock-props";
 import { Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 const DEFAULT_FACTORS: ModelFactor[] = [
   { id: "recent_form", name: "Recent Form", weight: 25 },
@@ -86,7 +87,7 @@ export default function ModelsPage() {
   const handleBuildModel = async () => {
     if (!user || !newName.trim()) return;
     if (!canCreateMore) {
-      alert("Model limit reached. Upgrade to Premium for up to 10 models.");
+      toast.error("Model limit reached. Upgrade to Premium for up to 10 models.");
       return;
     }
     setBuildModelLoading(true);
@@ -120,7 +121,7 @@ export default function ModelsPage() {
       .single();
 
     if (insertError) {
-      alert(`Failed to create model: ${insertError.message}`);
+      toast.error(`Failed to create model: ${insertError.message}`);
       return;
     }
     if (inserted) {
@@ -134,6 +135,7 @@ export default function ModelsPage() {
         createdAt: inserted.created_at,
       };
       setModels((prev) => [m, ...prev]);
+      toast.success("Model created");
       setShowCreator(false);
       setNewName("");
       setNewDesc("");
@@ -225,8 +227,9 @@ export default function ModelsPage() {
                   );
                   setEditingId(null);
                   hideEditModal();
+                  toast.success("Model updated");
                 } catch {
-                  alert("Failed to update model");
+                  toast.error("Failed to update model");
                 }
               }}
             >
@@ -253,8 +256,9 @@ export default function ModelsPage() {
     try {
       await supabase.from("user_models").delete().eq("id", model.id).eq("user_id", user.id);
       setModels((prev) => prev.filter((m) => m.id !== model.id));
+      toast.success("Model deleted");
     } catch {
-      alert("Failed to delete model");
+      toast.error("Failed to delete model");
     } finally {
       setDeletingId(null);
     }
@@ -278,6 +282,7 @@ export default function ModelsPage() {
           isActive: m.id === model.id,
         }))
       );
+      toast.success("Active model updated");
     } finally {
       setActiveModelId(null);
     }

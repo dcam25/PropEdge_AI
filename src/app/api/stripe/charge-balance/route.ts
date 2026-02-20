@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
         email: user.email,
         limit: 1,
       });
-      if (customers.data[0]) {
-        customerId = customers.data[0].id;
+      if (customers[0]) {
+        customerId = customers[0].id;
         await supabase.from("stripe_customers").upsert(
           { user_id: user.id, stripe_customer_id: customerId },
           { onConflict: "user_id" }
@@ -59,6 +59,52 @@ export async function POST(req: NextRequest) {
       }
     } catch {
       // ignore
+    }
+  }
+
+  if (!customerId) {
+    try {
+      const { data: sessions } = await stripe.checkout.sessions.list({ limit: 100 });
+      const match = sessions.find((s) => s.metadata?.user_id === user.id && s.customer);
+      if (match) {
+        customerId = typeof match.customer === "string" ? match.customer : match.customer?.id ?? null;
+        if (customerId) {
+          await supabase.from("stripe_customers").upsert(
+            { user_id: user.id, stripe_customer_id: customerId },
+            { onConflict: "user_id" }
+          );
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // If customer was deleted in Stripe (transactions exist but no active customer), create new.
+  if (customerId) {
+    try {
+      const customer = await stripe.customers.retrieve(customerId);
+      if (customer && "deleted" in customer && customer.deleted) {
+        const newCustomer = await stripe.customers.create({
+          email: user.email ?? undefined,
+          metadata: { supabase_user_id: user.id },
+        });
+        await supabase.from("stripe_customers").upsert(
+          { user_id: user.id, stripe_customer_id: newCustomer.id },
+          { onConflict: "user_id" }
+        );
+        customerId = newCustomer.id;
+      }
+    } catch {
+      const newCustomer = await stripe.customers.create({
+        email: user.email ?? undefined,
+        metadata: { supabase_user_id: user.id },
+      });
+      customerId = newCustomer.id;
+      await supabase.from("stripe_customers").upsert(
+        { user_id: user.id, stripe_customer_id: customerId },
+        { onConflict: "user_id" }
+      );
     }
   }
 

@@ -26,13 +26,34 @@ export async function POST() {
       .eq("user_id", user.id)
       .single();
 
-    const customerId = sc?.stripe_customer_id;
+    let customerId = sc?.stripe_customer_id ?? null;
+
+    // If customer was deleted in Stripe, create new and update stripe_customers.
+    if (customerId) {
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (customer && "deleted" in customer && customer.deleted) {
+          const newCustomer = await stripe.customers.create({
+            email: user.email ?? undefined,
+            metadata: { supabase_user_id: user.id },
+          });
+          await supabase.from("stripe_customers").upsert(
+            { user_id: user.id, stripe_customer_id: newCustomer.id },
+            { onConflict: "user_id" }
+          );
+          customerId = newCustomer.id;
+        }
+      } catch {
+        customerId = null;
+      }
+    }
+
     if (!customerId) {
       return NextResponse.json({ error: "No payment method on file. Add balance first." }, { status: 400 });
     }
 
     const customer = await stripe.customers.retrieve(customerId);
-    if (customer.deleted) {
+    if (customer && "deleted" in customer && customer.deleted) {
       return NextResponse.json({ error: "Customer not found" }, { status: 400 });
     }
 

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { passwordSchema } from "@/lib/validations/signup";
 
 type ResetForm = { password: string; confirmPassword: string };
@@ -32,19 +33,25 @@ export default function ResetPasswordPage() {
   async function onSubmit(data: ResetForm) {
     setError("");
     if (data.password !== data.confirmPassword) {
-      setError("Passwords do not match");
+      const msg = "Passwords do not match";
+      setError(msg);
+      toast.error(msg);
       return;
     }
     const result = passwordSchema.safeParse(data.password);
     if (!result.success) {
-      setError(result.error.issues[0]?.message ?? "Invalid password");
+      const msg = result.error.issues[0]?.message ?? "Invalid password";
+      setError(msg);
+      toast.error(msg);
       return;
     }
     const { error } = await supabase.auth.updateUser({ password: data.password });
     if (error) {
       setError(error.message);
+      toast.error(error.message);
       return;
     }
+    toast.success("Password updated. Redirecting to sign in...");
     router.push("/login?message=password_reset");
     router.refresh();
   }

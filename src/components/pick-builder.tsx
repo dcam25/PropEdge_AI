@@ -7,6 +7,7 @@ import type { Prop } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface PickBuilderProps {
   picks: Prop[];
@@ -221,7 +222,9 @@ export function PickBuilder({ picks, onRemove, onReorder }: PickBuilderProps) {
       );
       const text = lines.join("\n");
       await navigator.clipboard.writeText(text);
-      alert("Copied to clipboard! Paste into PrizePicks/Underdog.");
+      toast.success("Copied to clipboard! Paste into PrizePicks/Underdog.");
+    } catch {
+      toast.error("Failed to copy to clipboard");
     } finally {
       setCopying(false);
     }

@@ -80,45 +80,37 @@ export async function POST(req: NextRequest) {
         // ignore
       }
     }
-    if (session.metadata?.type === "balance_credit" && session.customer) {
-      const customerId = typeof session.customer === "string" ? session.customer : session.customer.id;
-      const userId = (session.metadata?.user_id as string) ?? (await getUserIdFromCustomer(customerId));
+    const customerId = session.customer
+      ? typeof session.customer === "string"
+        ? session.customer
+        : session.customer.id
+      : null;
+    const userId = (session.metadata?.user_id as string) ?? (customerId ? await getUserIdFromCustomer(customerId) : null);
 
-      if (userId) {
-        await supabase.from("stripe_customers").upsert(
-          { user_id: userId, stripe_customer_id: customerId },
-          { onConflict: "user_id" }
-        );
-      }
+    // Always upsert stripe_customers when we have customer + userId (subscription or balance_credit).
+    // This fixes "stripe_customer not found" when checkout API's insert failed or webhook runs first.
+    if (customerId && userId) {
+      await supabase.from("stripe_customers").upsert(
+        { user_id: userId, stripe_customer_id: customerId },
+        { onConflict: "user_id" }
+      );
+    }
 
+    if (session.metadata?.type === "balance_credit" && customerId) {
       const amountCents = parseInt(session.metadata?.amount_cents ?? "0", 10) || (session.amount_total ?? 0);
       if (amountCents > 0) {
-        let txnId: string | null = null;
         try {
-          const txn = await stripe.customers.createBalanceTransaction(customerId, {
+          await stripe.customers.createBalanceTransaction(customerId, {
             amount: -amountCents,
             currency: "usd",
             description: "Account credit",
+            metadata: { checkout_session_id: session.id },
           });
-          txnId = txn.id;
         } catch (e) {
           console.error("Failed to credit customer balance:", e);
         }
-        if (userId) {
-          const invoiceId = txnId ? `balance_${txnId}` : `balance_${session.id}`;
-          await supabase.from("invoices").upsert(
-            {
-              stripe_invoice_id: invoiceId,
-              user_id: userId,
-              amount_cents: amountCents,
-              currency: "usd",
-              status: "paid",
-              description: "Account credit",
-              invoice_date: new Date().toISOString(),
-            },
-            { onConflict: "stripe_invoice_id" }
-          );
-        }
+        // Do not insert into invoices - balance credits are not invoices.
+        // Balance is shown from Stripe customer.balance in the profile.
       }
     }
   }
@@ -127,7 +119,39 @@ export async function POST(req: NextRequest) {
     const inv = event.data.object as Stripe.Invoice;
     const customerId = typeof inv.customer === "string" ? inv.customer : inv.customer?.id;
     if (!customerId) return NextResponse.json({ received: true });
-    const userId = await getUserIdFromCustomer(customerId);
+    let userId = await getUserIdFromCustomer(customerId);
+    if (!userId) {
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (customer && !("deleted" in customer) && customer.metadata?.supabase_user_id) {
+          userId = customer.metadata.supabase_user_id;
+          await supabase.from("stripe_customers").upsert(
+            { user_id: userId, stripe_customer_id: customerId },
+            { onConflict: "user_id" }
+          );
+        }
+      } catch {
+        // ignore
+      }
+    }
+    if (!userId && inv.subscription) {
+      try {
+        const subId = typeof inv.subscription === "string" ? inv.subscription : inv.subscription?.id;
+        if (subId) {
+          const sub = await stripe.subscriptions.retrieve(subId);
+          const subUserId = sub.metadata?.user_id as string | undefined;
+          if (subUserId) {
+            userId = subUserId;
+            await supabase.from("stripe_customers").upsert(
+              { user_id: userId, stripe_customer_id: customerId },
+              { onConflict: "user_id" }
+            );
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
     if (!userId) return NextResponse.json({ received: true });
     const description = inv.lines?.data?.[0]?.description ?? "PropEdge Premium";
     await supabase.from("invoices").upsert(

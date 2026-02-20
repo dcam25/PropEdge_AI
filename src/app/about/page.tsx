@@ -83,7 +83,7 @@ export default function AboutPage() {
                 <span className="text-emerald-500">✓</span> Stripe customers mapping
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-emerald-500">✓</span> Invoices table (synced from Stripe webhook)
+                <span className="text-emerald-500">✓</span> Invoices table (optional, for subscription records)
               </li>
             </ul>
             <h3 className="mt-4 font-medium text-zinc-200">Auth</h3>
@@ -128,7 +128,7 @@ export default function AboutPage() {
                 <span className="text-emerald-500">✓</span> Balance credit (charge $10+)
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-emerald-500">✓</span> Invoices synced to Supabase
+                <span className="text-emerald-500">✓</span> Balance & transactions (Stripe customer balance)
               </li>
             </ul>
             <h3 className="mt-4 font-medium text-zinc-200">Checkout</h3>
@@ -147,12 +147,34 @@ export default function AboutPage() {
               The webhook updates <code className="rounded bg-zinc-800 px-1">profiles.is_premium</code> and
               syncs <code className="rounded bg-zinc-800 px-1">invoice.paid</code> to Supabase <code className="rounded bg-zinc-800 px-1">invoices</code>.
             </p>
-            <h3 className="mt-3 font-medium text-zinc-200">Balance & Invoices</h3>
+            <h3 className="mt-3 font-medium text-zinc-200">Balance & Transactions</h3>
             <p className="mt-1 text-sm text-zinc-500">
-              Invoices are stored in Supabase and synced from Stripe via webhook. Balance is fetched from Stripe.
-              Users can add credit ($10+ min) via <code className="rounded bg-zinc-800 px-1">/api/stripe/charge-balance</code>.
+              Balance and transaction history come from Stripe customer balance. Users add credit ($10+ min) via{" "}
+              <code className="rounded bg-zinc-800 px-1">/api/stripe/charge-balance</code>. Premium can be purchased with balance via{" "}
+              <code className="rounded bg-zinc-800 px-1">/api/premium/purchase-with-balance</code>.
             </p>
           </div>
+        </section>
+
+        <section className="mt-16">
+          <h2 className="text-xl font-semibold text-zinc-100">Packages</h2>
+          <p className="mt-2 text-zinc-400">
+            Key dependencies: Next.js 16, React 19, TypeScript, Tailwind v4, Radix UI, react-hook-form, zod, Zustand, flowbite-react (Datepicker), framer-motion, recharts, sonner, Stripe, Supabase.
+          </p>
+          <p className="mt-2 text-sm text-zinc-500">
+            See <Link href="/readme" className="text-emerald-400 hover:underline">README</Link> for the full package list.
+          </p>
+        </section>
+
+        <section className="mt-16">
+          <h2 className="text-xl font-semibold text-zinc-100">Vercel Deploy</h2>
+          <p className="mt-2 text-zinc-400">
+            PropEdge AI is designed to deploy on Vercel. Connect your GitHub repo, add environment variables (Supabase, Stripe, AI keys), and configure the Stripe webhook URL to your Vercel domain.
+          </p>
+          <ul className="mt-2 space-y-1 text-sm text-zinc-500">
+            <li>• Add <code className="rounded bg-zinc-800 px-1">/auth/callback</code> to Supabase redirect URLs</li>
+            <li>• Set Stripe webhook to <code className="rounded bg-zinc-800 px-1">/api/stripe/webhook</code></li>
+          </ul>
         </section>
 
         <div className="mt-16 flex gap-4">

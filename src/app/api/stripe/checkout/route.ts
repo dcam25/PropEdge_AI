@@ -48,10 +48,10 @@ export async function POST(req: NextRequest) {
         metadata: { supabase_user_id: user.id },
       });
       customerId = customer.id;
-      await supabase.from("stripe_customers").insert({
-        user_id: user.id,
-        stripe_customer_id: customerId,
-      });
+      await supabase.from("stripe_customers").upsert(
+        { user_id: user.id, stripe_customer_id: customerId },
+        { onConflict: "user_id" }
+      );
     }
 
     const session = await stripe.checkout.sessions.create({

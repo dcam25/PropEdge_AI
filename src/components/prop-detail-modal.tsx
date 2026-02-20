@@ -6,6 +6,7 @@ import { AnimatedModal } from "@/components/animated-modal";
 import { Button } from "@/components/ui/button";
 import type { Prop } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 interface PropDetailModalProps {
   prop: Prop;
@@ -36,7 +37,7 @@ export function PropDetailModal({
   const handleGetInsight = async () => {
     if (!user) return;
     if (!canUseAIInsight()) {
-      alert("You've reached your daily limit of 5 AI insights. Upgrade to Premium for unlimited.");
+      toast.error("You've reached your daily limit of 5 AI insights. Upgrade to Premium for unlimited.");
       return;
     }
     setLoading(true);

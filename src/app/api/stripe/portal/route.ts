@@ -47,6 +47,48 @@ export async function POST(req: NextRequest) {
   }
 
   if (!customerId) {
+    const sessions = await stripe.checkout.sessions.list({ limit: 100 }).catch(() => ({ data: [] }));
+    const match = sessions.data.find((s) => s.metadata?.user_id === user.id && s.customer);
+    if (match) {
+      customerId = typeof match.customer === "string" ? match.customer : match.customer?.id ?? null;
+      if (customerId) {
+        await supabase.from("stripe_customers").upsert(
+          { user_id: user.id, stripe_customer_id: customerId },
+          { onConflict: "user_id" }
+        );
+      }
+    }
+  }
+
+  // If customer was deleted in Stripe, create new and update.
+  if (customerId) {
+    try {
+      const customer = await stripe.customers.retrieve(customerId);
+      if (customer && "deleted" in customer && customer.deleted) {
+        const newCustomer = await stripe.customers.create({
+          email: user.email ?? undefined,
+          metadata: { supabase_user_id: user.id },
+        });
+        await supabase.from("stripe_customers").upsert(
+          { user_id: user.id, stripe_customer_id: newCustomer.id },
+          { onConflict: "user_id" }
+        );
+        customerId = newCustomer.id;
+      }
+    } catch {
+      const newCustomer = await stripe.customers.create({
+        email: user.email ?? undefined,
+        metadata: { supabase_user_id: user.id },
+      });
+      await supabase.from("stripe_customers").upsert(
+        { user_id: user.id, stripe_customer_id: newCustomer.id },
+        { onConflict: "user_id" }
+      );
+      customerId = newCustomer.id;
+    }
+  }
+
+  if (!customerId) {
     return NextResponse.json(
       { error: "No billing account found" },
       { status: 400 }

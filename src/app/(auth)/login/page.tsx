@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type LoginForm = {
   email: string;
@@ -28,18 +29,26 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (searchParams.get("error") === "auth_callback") {
-      setError("Email confirmation failed. The link may have expired. Try signing up again.");
+      const msg = "Email confirmation failed. The link may have expired. Try signing up again.";
+      setError(msg);
+      toast.error(msg);
     }
     if (searchParams.get("error") === "reset_expired") {
-      setError("Password reset link expired. Please request a new one.");
+      const msg = "Password reset link expired. Please request a new one.";
+      setError(msg);
+      toast.error(msg);
     }
     if (searchParams.get("message") === "confirm_email") {
-      setSuccess("Check your email to confirm your account, then sign in.");
+      const msg = "Check your email to confirm your account, then sign in.";
+      setSuccess(msg);
       setError("");
+      toast.success(msg);
     }
     if (searchParams.get("message") === "password_reset") {
-      setSuccess("Password updated. You can now sign in.");
+      const msg = "Password updated. You can now sign in.";
+      setSuccess(msg);
       setError("");
+      toast.success(msg);
     }
   }, [searchParams]);
 
@@ -66,8 +75,10 @@ export default function LoginPage() {
     });
     if (error) {
       setError(error.message);
+      toast.error(error.message);
       return;
     }
+    toast.success("Signed in successfully");
     router.push(redirectTo);
     router.refresh();
   }
@@ -84,11 +95,14 @@ export default function LoginPage() {
     });
     if (error) {
       setError(error.message);
+      toast.error(error.message);
       return;
     }
     setEmail(data.email);
     setStep("otp");
-    setSuccess("Check your email for the 6-digit code.");
+    const msg = "Check your email for the 6-digit code.";
+    setSuccess(msg);
+    toast.success(msg);
   }
 
   async function verifyOtp(data: { otp: string }) {
@@ -100,8 +114,10 @@ export default function LoginPage() {
     });
     if (error) {
       setError(error.message);
+      toast.error(error.message);
       return;
     }
+    toast.success("Signed in successfully");
     router.push(redirectTo);
     router.refresh();
   }

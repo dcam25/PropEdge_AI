@@ -1,0 +1,14 @@
+diff --git a/node_modules/flowbite-react/dist/components/Datepicker/Datepicker.js b/node_modules/flowbite-react/dist/components/Datepicker/Datepicker.js
+index 906681e..91f8827 100644
+--- a/node_modules/flowbite-react/dist/components/Datepicker/Datepicker.js
++++ b/node_modules/flowbite-react/dist/components/Datepicker/Datepicker.js
+@@ -188,8 +188,7 @@ const Datepicker = forwardRef((props, ref) => {
+               }
+               setIsOpen(true);
+             },
+-            value: displayValue,
+-            defaultValue: initialDate ? getFormattedDate(language, initialDate) : label,
++            ...(value !== undefined ? { value: displayValue } : { defaultValue: initialDate ? getFormattedDate(language, initialDate) : label }),
+             readOnly: true,
+             ...restProps
+           }
