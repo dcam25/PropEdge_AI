@@ -32,8 +32,7 @@ export default function DashboardPage() {
   const [sportFilter, setSportFilter] = useState<SportId | "all">("all");
   const [minHitRate, setMinHitRate] = useState<string>("");
   const [minEdge, setMinEdge] = useState<string>("");
-  const [detailProp, setDetailProp] = useState<Prop | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const detailPropRef = useRef<Prop | null>(null);
   const [picks, setPicks] = useState<Prop[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
