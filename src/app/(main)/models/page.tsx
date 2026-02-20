@@ -64,24 +64,28 @@ export default function ModelsPage() {
       return;
     }
     setModelsLoading(true);
-    supabase
-      .from("user_models")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setModels((data ?? []).map((r: Record<string, unknown>) => ({
-          id: r.id,
-          userId: r.user_id,
-          name: r.name,
-          description: r.description,
-          factors: r.factors as ModelFactor[],
-          performanceScore: r.performance_score,
-          isActive: r.is_active,
-          createdAt: r.created_at,
+    void (async () => {
+      try {
+        const { data } = await supabase
+          .from("user_models")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        const rows = (data ?? []) as Array<Record<string, unknown>>;
+        setModels(rows.map((r): UserModel => ({
+          id: String(r.id ?? ""),
+          userId: String(r.user_id ?? ""),
+          name: String(r.name ?? ""),
+          description: String(r.description ?? ""),
+          factors: (r.factors ?? []) as ModelFactor[],
+          performanceScore: typeof r.performance_score === "number" ? r.performance_score : undefined,
+          isActive: Boolean(r.is_active),
+          createdAt: String(r.created_at ?? ""),
         })));
-      })
-      .finally(() => setModelsLoading(false));
+      } finally {
+        setModelsLoading(false);
+      }
+    })();
   }, [user]);
 
   const handleBuildModel = async () => {
@@ -221,7 +225,7 @@ export default function ModelsPage() {
                   setModels((prev) =>
                     prev.map((m) =>
                       m.id === editingId
-                        ? { ...m, name: editName.trim(), description: editDesc.trim() || null, factors: editFactors }
+                        ? { ...m, name: editName.trim(), description: editDesc.trim() || "", factors: editFactors }
                         : m
                     )
                   );
